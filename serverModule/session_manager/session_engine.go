@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"example.com/server/models"
+	"example.com/server/models/message_models"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/mitchellh/mapstructure"
 )
 
 var Sessions map[uuid.UUID]*models.Session
@@ -35,34 +35,35 @@ func HandleUserSession(conn *websocket.Conn, s *models.Session, userId uuid.UUID
 			break
 		}
 
-		unmashalClientMessage(s, msg, userId)
+		if Sessions[s.SessionId] == nil {
+			fmt.Println("Session does not exist")
+			break
+		}
 
-		// msgStr := string(msg)
-		// BroadcastMessage(s.SessionId, msgStr)
-		// fmt.Println("Received message:", msgStr)
+		s.SessionLastMessageTime = time.Now()
+		unmarshalClientMessage(s, msg, userId)
 	}
 }
 
-func unmashalClientMessage(s *models.Session, msg []byte, userId uuid.UUID) error {
+func unmarshalClientMessage(s *models.Session, msg []byte, userId uuid.UUID) error {
 	// Unmarshal message into generic PlayerMessage
-	var clientMessage *models.Message
+	var clientMessage *message_models.Message
 	err := json.Unmarshal(msg, &clientMessage)
 	if err != nil {
 		return err
 	}
+
+	handleMessage(s, clientMessage, s.Players[userId])
+
+	return nil
+}
+
+func handleMessage(s *models.Session, clientMessage *message_models.Message, p *models.Player) error {
 	messageMap := clientMessage.Message.(map[string]interface{})
 
-	// Determine the type and unmarshal accordingly
 	switch clientMessage.MessageType {
-	case models.PlayerReadyMessageType:
-		var playerReadyMessage models.PlayerReadyMessage
-		if err := mapstructure.Decode(messageMap, &playerReadyMessage); err != nil {
-			return err
-		}
-		playerReadyMessage.PlayerId = userId.String()
-		fmt.Println("Successfully retrieved PlayerReadyType ", playerReadyMessage.PlayerId, playerReadyMessage.PlayerReady)
-		BroadcastMessage(s.SessionId, models.CreateMessage(playerReadyMessage, models.PlayerReadyMessageType))
-
+	case message_models.PlayerReadyMessageType:
+		handlePlayerReadyMessage(s, messageMap, p)
 	default:
 		fmt.Println("Unknown message type")
 	}
@@ -80,12 +81,12 @@ func updateClient(conn *websocket.Conn, s *models.Session) {
 		case <-done:
 			return
 		case <-ticker.C:
-			sessionInfo := models.SessionInfoMessage{
+			sessionInfo := message_models.SessionInfoMessage{
 				SessionId:        s.SessionId,
 				SessionStartTime: s.SessionStartTime,
 				Players:          make(map[uuid.UUID]string),
 			}
-			if !SendMessage(conn, models.CreateMessage(sessionInfo, models.SessionInfoMessageType)) {
+			if !SendMessage(conn, message_models.CreateMessage(sessionInfo, message_models.SessionInfoMessageType)) {
 				done <- true
 			}
 		}
@@ -100,14 +101,4 @@ func getClientMessage(conn *websocket.Conn, s *models.Session, userId uuid.UUID)
 	}
 
 	return msg, nil
-	//var message *PlayerUpdate
-	// err = json.Unmarshal(msg, &message)
-	// if err != nil {
-	// 	fmt.Println("Error parsing JSON:", err)
-	// 	return nil, err
-	// }
-
-	// fmt.Printf("Received new score: %v\nx: %v\ny: %v\n", message.Score, message.X, message.Y)
-	// s.PlayerScores[userId] = message.Score
-
 }

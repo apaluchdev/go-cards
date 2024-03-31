@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"example.com/server/models"
+	"example.com/server/models/message_models"
 	"example.com/server/session_manager"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -70,7 +71,7 @@ func ConnectSession(c *gin.Context) {
 	id := c.Query("id")
 	sessionId, err := uuid.Parse(id)
 	if err != nil {
-		sessionId = session_manager.CreateSession()
+		sessionId = session_manager.CreateSession(models.War)
 	}
 
 	// Verify that the session exists or was created successfully
@@ -87,12 +88,9 @@ func ConnectSession(c *gin.Context) {
 		return
 	}
 
-	// Add the player to the session
-	session.Players[userIdUuid] = &models.Player{PlayerId: userIdUuid, PlayerName: username, PlayerConnection: conn}
-
-	// Send the player the session details and notify other players of the new player
-	session_manager.SendMessage(conn, models.CreateMessage(session, models.SessionStartedMessageType))
-	session_manager.BroadcastMessage(session.SessionId, models.CreateMessage(session.Players[userIdUuid], models.PlayerJoinedMessageType))
+	session_manager.AddPlayerToSession(sessionId, &models.Player{PlayerId: userIdUuid, PlayerName: username, PlayerConnection: conn})
+	session_manager.SendMessage(conn, message_models.CreateMessage(message_models.CreateSessionStartedMessage(session, userIdUuid), message_models.SessionStartedMessageType))
+	session_manager.BroadcastMessage(session.SessionId, message_models.CreateMessage(session.Players[userIdUuid], message_models.PlayerJoinedMessageType))
 
 	// Handle the websocket communication with this player
 	go session_manager.HandleUserSession(conn, session, userIdUuid)
