@@ -1,6 +1,6 @@
 package war
 
-import "example.com/server/models"
+import "example.com/go_cards_server/models"
 
 func GetWarDeck() *models.Deck {
 	var cards []models.Card = []models.Card{
@@ -57,7 +57,5 @@ func GetWarDeck() *models.Deck {
 		{Suit: "Spades", Value: "K"},
 		{Suit: "Spades", Value: "A"},
 	}
-	deck := &models.Deck{Cards: cards}
-	deck.Shuffle()
-	return deck
+	return &models.Deck{Cards: cards}
 }

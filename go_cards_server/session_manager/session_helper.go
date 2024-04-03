@@ -5,22 +5,19 @@ import (
 	"log"
 	"time"
 
-	"example.com/server/models"
-	war "example.com/server/war_manager"
+	"example.com/go_cards_server/models"
 	"github.com/google/uuid"
 )
 
-func CreateSession(gameType models.GameType) uuid.UUID {
+func CreateSession() uuid.UUID {
 	// Create a new session id
 	sessionId := uuid.New()
 
 	// Create a new session
 	session := &models.Session{SessionId: sessionId, SessionStartTime: time.Now()}
 	session.Players = make(map[uuid.UUID]*models.Player)
-	session.GameType = gameType
 
 	Sessions[session.SessionId] = session
-	session.Deck = war.GetWarDeck()
 
 	return sessionId
 }

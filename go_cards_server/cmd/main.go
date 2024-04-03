@@ -1,8 +1,8 @@
 package main
 
 import (
-	router "example.com/server/api"
-	"example.com/server/session_manager"
+	router "example.com/go_cards_server/api"
+	"example.com/go_cards_server/session_manager"
 )
 
 func main() {

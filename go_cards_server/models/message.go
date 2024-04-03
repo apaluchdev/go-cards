@@ -1,4 +1,4 @@
-package message_models
+package models
 
 import (
 	"time"
@@ -9,6 +9,7 @@ const (
 	SessionStartedMessageType MessageType = "sessionStarted"
 	SessionInfoMessageType    MessageType = "sessionInfo"
 	PlayerJoinedMessageType   MessageType = "playerJoined"
+	GameMessageType           MessageType = "gameMessage"
 	// Add more message types as needed
 )
 
@@ -27,4 +28,3 @@ func CreateMessage(message any, messageType MessageType) Message {
 		Message:          message,
 	}
 }
-

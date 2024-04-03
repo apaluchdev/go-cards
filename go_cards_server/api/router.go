@@ -1,7 +1,7 @@
 package router
 
 import (
-	router "example.com/server/api/routes"
+	router "example.com/go_cards_server/api/routes"
 	"github.com/gin-gonic/gin"
 )
 

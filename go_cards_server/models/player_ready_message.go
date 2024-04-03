@@ -1,4 +1,4 @@
-package message_models
+package models
 
 // PlayerJoinedMessage
 type PlayerReadyMessage struct {
