@@ -1,4 +1,4 @@
-package models
+package cards
 
 import "math/rand"
 
@@ -24,10 +24,15 @@ func (d *Deck) Draw() Card {
 	return drawnCard
 }
 
-func (d *Deck) DrawNCards(n uint16) []Card {
-	var drawnCards []Card = d.Cards[:n]
-	d.Cards = d.Cards[n:]
-	return drawnCards
+func (d *Deck) DrawNCards(n int) []Card {
+	if n <= len(d.Cards) {
+		var drawnCards []Card = d.Cards[:n]
+		d.Cards = d.Cards[n:]
+		return drawnCards
+	} else {
+		// TODO - handle not enough cards in deck when drawing
+		return nil
+	}
 }
 
 func (d *Deck) AddCard(c Card) {

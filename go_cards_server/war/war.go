@@ -1,9 +1,78 @@
 package war
 
-import "example.com/go_cards_server/models"
+import (
+	"log"
 
-func GetWarDeck() *models.Deck {
-	var cards []models.Card = []models.Card{
+	"example.com/go_cards_server/cards"
+	"example.com/go_cards_server/messages"
+	"example.com/go_cards_server/session"
+	"github.com/mitchellh/mapstructure"
+)
+
+type WarState struct {
+	GameStarted bool
+	Deck        *cards.Deck
+}
+
+func GetShuffledWarDeck() *cards.Deck {
+	deck := GetWarDeck()
+	deck.Shuffle()
+	return deck
+}
+
+func RunWarGame(s *session.Session) {
+	// Moved warstate here because each war needs its own state
+	var warState = &WarState{GameStarted: false, Deck: GetShuffledWarDeck()}
+
+	for {
+		msg := <-s.GameChannel
+
+		// Check if message is nil
+		if msg == nil {
+			continue
+		}
+
+		if !s.ArePlayersReady() {
+			return
+		}
+
+		// TODO - IF SESSION IS OVER THEN BREAK
+
+		if !warState.GameStarted {
+			DealCards(s)
+		}
+
+		switch msg.MessageType {
+		case messages.CardPlayedMessageType:
+			handleCardPlayedMessage(msg, s)
+		default:
+			log.Println("war: Unknown message type")
+		}
+	}
+}
+
+func DealCards(s *session.Session) {
+	// for _, p := range s.Players {
+	// 	p.SendMessage(session.CreateCardDealedMessage(p.PlayerId, warState.Deck.DrawNCards(5)))
+	// }
+}
+
+func handleCardPlayedMessage(msg *messages.Message, s *session.Session) {
+	messageMap := msg.Message.(map[string]interface{})
+	var cardPlayed messages.CardPlayedMessage
+	if err := mapstructure.Decode(messageMap, &cardPlayed); err != nil {
+		log.Println("Error decoding handleCardPlayed message", err)
+		return
+	}
+
+	// Update the war game state here
+
+	// Broadcast the card played message to all players
+	s.BroadcastMessage(session.CreateCardPlayedMessage(cardPlayed.PlayerId, cardPlayed.Card))
+}
+
+func GetWarDeck() *cards.Deck {
+	var warCards []cards.Card = []cards.Card{
 		{Suit: "Hearts", Value: "2"},
 		{Suit: "Hearts", Value: "3"},
 		{Suit: "Hearts", Value: "4"},
@@ -57,5 +126,5 @@ func GetWarDeck() *models.Deck {
 		{Suit: "Spades", Value: "K"},
 		{Suit: "Spades", Value: "A"},
 	}
-	return &models.Deck{Cards: cards}
+	return &cards.Deck{Cards: warCards}
 }

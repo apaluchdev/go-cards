@@ -2,10 +2,10 @@ package main
 
 import (
 	router "example.com/go_cards_server/api"
-	"example.com/go_cards_server/session_manager"
+	"example.com/go_cards_server/sessionmgr"
 )
 
 func main() {
-	session_manager.InitSessionEngine()
+	sessionmgr.InitSessionEngine()
 	router.InitializeRouter()
 }
