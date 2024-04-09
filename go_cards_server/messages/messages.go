@@ -14,27 +14,28 @@ type MessageType string
 const (
 	PlayerReadyMessageType    MessageType = "playerReady"
 	SessionStartedMessageType MessageType = "sessionStarted"
+	GameStartedMessageType    MessageType = "gameStarted"
 	SessionInfoMessageType    MessageType = "sessionInfo"
+	SessionEndedMessageType   MessageType = "sessionEnded"
 	PlayerJoinedMessageType   MessageType = "playerJoined"
 	GameMessageType           MessageType = "gameMessage"
-	CardPlayedMessageType     MessageType = "cardPlayed"
-	CardDealedMessageType     MessageType = "cardDealed"
+	CardsPlayedMessageType    MessageType = "cardsPlayed"
+	CardsDealtMessageType     MessageType = "cardsDealt"
 	// Add more message types as needed
 )
 
 type Message struct {
 	MessageType      MessageType `json:"messageType"`
 	MessageTimestamp time.Time   `json:"messageTimestamp"`
-	Message          any         `json:"message"`
 }
 
-func CreateMessage(message any, messageType MessageType) Message {
-	return Message{
-		MessageType:      messageType,
-		MessageTimestamp: time.Now(),
-		Message:          message,
-	}
-}
+// func CreateMessage(message any, messageType MessageType) Message {
+// 	return Message{
+// 		MessageType:      messageType,
+// 		MessageTimestamp: time.Now(),
+// 		Message:          message,
+// 	}
+// }
 
 func UnmarshalByteMessage(msg []byte) (*Message, error) {
 	var message *Message
@@ -48,18 +49,20 @@ func UnmarshalByteMessage(msg []byte) (*Message, error) {
 }
 
 type PlayerReadyMessage struct {
-	PlayerId    uuid.UUID `json:"playerId"`
-	PlayerReady bool      `json:"playerReady"`
+	MessageInfo Message `json:"messageInfo"`
+	PlayerId    string  `json:"playerId"`
+	PlayerReady bool    `json:"playerReady"`
 }
 
 type SessionInfoMessage struct {
+	MessageInfo      Message              `json:"messageInfo"`
 	SessionId        uuid.UUID            `json:"sessionId"`
 	SessionStartTime time.Time            `json:"sessionStartTime"`
 	Players          map[uuid.UUID]string `json:"players"`
 }
 
-// SessionInfoMessage
 type SessionStartedMessage struct {
+	MessageInfo            Message                      `json:"messageInfo"`
 	SessionId              uuid.UUID                    `json:"sessionId"`
 	SessionStartTime       time.Time                    `json:"sessionStartTime"`
 	SessionLastMessageTime time.Time                    `json:"sessionLastMessageTime"`
@@ -67,13 +70,35 @@ type SessionStartedMessage struct {
 	PlayerId               uuid.UUID                    `json:"playerId"`
 }
 
-type CardPlayedMessage struct {
-	PlayerId uuid.UUID  `json:"playerId"`
-	Card     cards.Card `json:"card"`
-	TargetId uuid.UUID  `json:"targetId"`
+type SessionEndedMessage struct {
+	MessageInfo Message   `json:"messageInfo"`
+	SessionId   uuid.UUID `json:"sessionId"`
 }
 
-type CardDealedMessage struct {
-	PlayerId uuid.UUID    `json:"playerId"`
-	Card     []cards.Card `json:"card"`
+type GameStartedMessage struct {
+	MessageInfo            Message                      `json:"messageInfo"`
+	SessionId              uuid.UUID                    `json:"sessionId"`
+	SessionStartTime       time.Time                    `json:"sessionStartTime"`
+	SessionLastMessageTime time.Time                    `json:"sessionLastMessageTime"`
+	Players                map[uuid.UUID]*player.Player `json:"players"`
+	PlayerId               uuid.UUID                    `json:"playerId"`
+}
+
+type CardsPlayedMessage struct {
+	MessageInfo Message      `json:"messageInfo"`
+	PlayerId    uuid.UUID    `json:"playerId"`
+	Cards       []cards.Card `json:"cards"`
+	TargetId    uuid.UUID    `json:"targetId"`
+}
+
+type PlayerJoinedMessage struct {
+	MessageInfo Message `json:"messageInfo"`
+	PlayerId    string  `json:"playerId"`
+	PlayerName  string  `json:"playerName"`
+}
+
+type CardsDealtMessage struct {
+	MessageInfo Message      `json:"messageInfo"`
+	PlayerId    uuid.UUID    `json:"playerId"`
+	Cards       []cards.Card `json:"cards"`
 }

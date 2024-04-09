@@ -1,9 +1,9 @@
 package session
 
 import (
+	"log"
 	"time"
 
-	"example.com/go_cards_server/cards"
 	"example.com/go_cards_server/messages"
 	"example.com/go_cards_server/player"
 	"github.com/google/uuid"
@@ -15,48 +15,54 @@ type Session struct {
 	SessionLastMessageTime time.Time                    `json:"sessionLastMessageTime"`
 	Players                map[uuid.UUID]*player.Player `json:"players"`
 	GameChannel            chan *messages.Message       `json:"-"`
+	MaxPlayers             int                          `json:"maxPlayers"`
+	Active                 bool                         `json:"active"`
 }
 
-func CreateSessionInfoMessage(s *Session) messages.Message {
-	players := make(map[uuid.UUID]string)
-	for id, player := range s.Players {
-		players[id] = player.PlayerName
+func CreateSession() *Session {
+	// Create a new session id
+	sessionId := uuid.New()
+
+	// Create a new session
+	session := &Session{SessionId: sessionId, SessionStartTime: time.Now(), GameChannel: make(chan *messages.Message), Active: true, MaxPlayers: 0}
+	session.Players = make(map[uuid.UUID]*player.Player)
+
+	return session
+}
+
+func (s *Session) EndSession() {
+	s.Active = false
+
+	// Ensure each player connection is closed
+	for _, player := range s.Players {
+		if player.PlayerConnection != nil {
+			player.SendMessage(CreateSessionEndedMessage(s))
+			player.PlayerConnection.Close()
+		}
 	}
 
-	return messages.CreateMessage(messages.SessionInfoMessage{
-		SessionId:        s.SessionId,
-		SessionStartTime: s.SessionStartTime,
-		Players:          players,
-	}, messages.SessionInfoMessageType)
+	log.Println("Cleaning session:", s.SessionId)
 }
 
-func CreateSessionStartedMessage(s *Session, userId uuid.UUID) messages.Message {
-	return messages.CreateMessage(messages.SessionStartedMessage{
-		SessionId:        s.SessionId,
-		SessionStartTime: s.SessionStartTime,
-		Players:          s.Players,
-		PlayerId:         userId,
-	}, messages.SessionStartedMessageType)
+func (s *Session) AddPlayerToSession(player *player.Player) {
+	s.Players[player.PlayerId] = player
+
+	player.SendMessage(CreateSessionStartedMessage(s, player.PlayerId))
+	s.BroadcastMessage(CreatePlayerJoinedMessage(s.Players[player.PlayerId]))
+
+	// Handle the game communication with this player
+	go s.Communicate(player.PlayerId)
 }
 
-func CreatePlayerReadyMessage(playerId uuid.UUID, playerReady bool) messages.Message {
-	return messages.CreateMessage(messages.PlayerReadyMessage{
-		PlayerId:    playerId,
-		PlayerReady: playerReady,
-	}, messages.PlayerReadyMessageType)
-}
+func (s *Session) ArePlayersReady() bool {
+	if len(s.Players) < 2 {
+		return false
+	}
 
-func CreateCardPlayedMessage(playerId uuid.UUID, card cards.Card) messages.Message {
-	return messages.CreateMessage(messages.CardPlayedMessage{
-		PlayerId:    playerId,
-		Card: card,
-	}, messages.PlayerReadyMessageType)
+	for _, player := range s.Players {
+		if !player.PlayerReady {
+			return false
+		}
+	}
+	return true
 }
-
-func CreateCardDealedMessage(playerId uuid.UUID, cards []cards.Card) messages.Message {
-	return messages.CreateMessage(messages.CardDealedMessage{
-		PlayerId:    playerId,
-		Card: cards,
-	}, messages.PlayerReadyMessageType)
-}
-

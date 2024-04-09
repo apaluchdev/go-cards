@@ -9,7 +9,7 @@ import (
 )
 
 // BroadcastMessage sends a message to all players in a session
-func (s *Session) BroadcastMessage(message messages.Message) {
+func (s *Session) BroadcastMessage(message any) {
 	for _, player := range s.Players {
 		err := player.SendMessage(message)
 		if err != nil {

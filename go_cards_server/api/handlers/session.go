@@ -53,6 +53,11 @@ func ConnectSession(c *gin.Context) {
 		}
 	}
 
+	if (len(s.Players) >= s.MaxPlayers) && s.MaxPlayers != 0 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Session is full"})
+		return
+	}
+
 	sessionmgr.HandlePlayerJoined(s, &player.Player{PlayerId: userIdUuid, PlayerName: username, PlayerConnection: conn})
 }
 

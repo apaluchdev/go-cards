@@ -1,130 +1,84 @@
 package war
 
 import (
+	"encoding/json"
 	"log"
 
 	"example.com/go_cards_server/cards"
 	"example.com/go_cards_server/messages"
 	"example.com/go_cards_server/session"
-	"github.com/mitchellh/mapstructure"
 )
 
-type WarState struct {
+type War struct {
 	GameStarted bool
 	Deck        *cards.Deck
+	warSession  *session.Session
 }
 
-func GetShuffledWarDeck() *cards.Deck {
-	deck := GetWarDeck()
-	deck.Shuffle()
-	return deck
+func CreateNewWarSession(s *session.Session) *War {
+	s.MaxPlayers = 2
+	var w = &War{GameStarted: false, Deck: GetShuffledWarDeck(), warSession: s}
+	go w.Run()
+	return w
 }
 
-func RunWarGame(s *session.Session) {
-	// Moved warstate here because each war needs its own state
-	var warState = &WarState{GameStarted: false, Deck: GetShuffledWarDeck()}
+func (w *War) Run() {
 
 	for {
-		msg := <-s.GameChannel
+		msg := <-w.warSession.GameChannel
 
 		// Check if message is nil
 		if msg == nil {
+			if !w.warSession.Active {
+				break
+			}
 			continue
 		}
 
-		if !s.ArePlayersReady() {
-			return
+		if !w.warSession.ArePlayersReady() {
+			log.Println("Not all players are ready")
+			continue
 		}
 
 		// TODO - IF SESSION IS OVER THEN BREAK
 
-		if !warState.GameStarted {
-			DealCards(s)
+		if !w.GameStarted {
+			w.warSession.BroadcastMessage(session.CreateGameStartedMessage(w.warSession))
+			w.DealCards()
 		}
 
 		switch msg.MessageType {
-		case messages.CardPlayedMessageType:
-			handleCardPlayedMessage(msg, s)
+		case messages.CardsPlayedMessageType:
+			w.handleCardsPlayedMessage(msg)
 		default:
 			log.Println("war: Unknown message type")
 		}
 	}
 }
 
-func DealCards(s *session.Session) {
-	// for _, p := range s.Players {
-	// 	p.SendMessage(session.CreateCardDealedMessage(p.PlayerId, warState.Deck.DrawNCards(5)))
-	// }
+func (w *War) DealCards() {
+	for _, p := range w.warSession.Players {
+		p.SendMessage(session.CreateCardsDealtMessage(p.PlayerId, w.Deck.DrawNCards(5)))
+	}
 }
 
-func handleCardPlayedMessage(msg *messages.Message, s *session.Session) {
-	messageMap := msg.Message.(map[string]interface{})
-	var cardPlayed messages.CardPlayedMessage
-	if err := mapstructure.Decode(messageMap, &cardPlayed); err != nil {
-		log.Println("Error decoding handleCardPlayed message", err)
-		return
+func (w *War) handleCardsPlayedMessage(msg *messages.Message) error {
+	var cardsPlayedMessage *messages.CardsPlayedMessage
+
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(msgBytes, &cardsPlayedMessage)
+	if err != nil {
+		return err
 	}
 
 	// Update the war game state here
 
 	// Broadcast the card played message to all players
-	s.BroadcastMessage(session.CreateCardPlayedMessage(cardPlayed.PlayerId, cardPlayed.Card))
-}
+	w.warSession.BroadcastMessage(session.CreateCardsPlayedMessage(cardsPlayedMessage.PlayerId, cardsPlayedMessage.Cards, cardsPlayedMessage.TargetId))
 
-func GetWarDeck() *cards.Deck {
-	var warCards []cards.Card = []cards.Card{
-		{Suit: "Hearts", Value: "2"},
-		{Suit: "Hearts", Value: "3"},
-		{Suit: "Hearts", Value: "4"},
-		{Suit: "Hearts", Value: "5"},
-		{Suit: "Hearts", Value: "6"},
-		{Suit: "Hearts", Value: "7"},
-		{Suit: "Hearts", Value: "8"},
-		{Suit: "Hearts", Value: "9"},
-		{Suit: "Hearts", Value: "10"},
-		{Suit: "Hearts", Value: "J"},
-		{Suit: "Hearts", Value: "Q"},
-		{Suit: "Hearts", Value: "K"},
-		{Suit: "Hearts", Value: "A"},
-		{Suit: "Diamonds", Value: "2"},
-		{Suit: "Diamonds", Value: "3"},
-		{Suit: "Diamonds", Value: "4"},
-		{Suit: "Diamonds", Value: "5"},
-		{Suit: "Diamonds", Value: "6"},
-		{Suit: "Diamonds", Value: "7"},
-		{Suit: "Diamonds", Value: "8"},
-		{Suit: "Diamonds", Value: "9"},
-		{Suit: "Diamonds", Value: "10"},
-		{Suit: "Diamonds", Value: "J"},
-		{Suit: "Diamonds", Value: "Q"},
-		{Suit: "Diamonds", Value: "K"},
-		{Suit: "Diamonds", Value: "A"},
-		{Suit: "Clubs", Value: "2"},
-		{Suit: "Clubs", Value: "3"},
-		{Suit: "Clubs", Value: "4"},
-		{Suit: "Clubs", Value: "5"},
-		{Suit: "Clubs", Value: "6"},
-		{Suit: "Clubs", Value: "7"},
-		{Suit: "Clubs", Value: "8"},
-		{Suit: "Clubs", Value: "9"},
-		{Suit: "Clubs", Value: "10"},
-		{Suit: "Clubs", Value: "J"},
-		{Suit: "Clubs", Value: "Q"},
-		{Suit: "Clubs", Value: "K"},
-		{Suit: "Clubs", Value: "A"},
-		{Suit: "Spades", Value: "2"},
-		{Suit: "Spades", Value: "3"},
-		{Suit: "Spades", Value: "4"},
-		{Suit: "Spades", Value: "5"},
-		{Suit: "Spades", Value: "6"},
-		{Suit: "Spades", Value: "7"},
-		{Suit: "Spades", Value: "8"},
-		{Suit: "Spades", Value: "9"},
-		{Suit: "Spades", Value: "10"},
-		{Suit: "Spades", Value: "J"},
-		{Suit: "Spades", Value: "Q"},
-		{Suit: "Spades", Value: "K"},
-		{Suit: "Spades", Value: "A"},
-	}
-	return &cards.Deck{Cards: warCards}
+	return nil
 }

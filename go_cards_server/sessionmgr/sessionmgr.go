@@ -34,7 +34,8 @@ func CreateSession(gameType gametypes.GameType) *session.Session {
 
 	switch gameType {
 	case gametypes.War:
-		go war.RunWarGame(session)
+		var warGame = war.CreateNewWarSession(session)
+		log.Println("Created new War session ", warGame) // TODO store this somewhere so we can track it
 	default:
 		log.Println("Unknown game type")
 	}
@@ -52,16 +53,18 @@ func sessionCleaner() {
 
 	for range ticker.C {
 		for sessionId, session := range Sessions {
-
-			// Ensure each player connection is closed
-			for _, player := range session.Players {
-				if player.PlayerConnection != nil {
-					player.PlayerConnection.WriteMessage(1, []byte("Session ending due to inactivity"))
-					player.PlayerConnection.Close()
-				}
-			}
-
 			if time.Since(session.SessionLastMessageTime) > 60*time.Second {
+				session.EndSession();
+				session.Active = false
+
+				// Ensure each player connection is closed
+				for _, player := range session.Players {
+					if player.PlayerConnection != nil {
+						player.PlayerConnection.WriteMessage(1, []byte("Session ending due to inactivity"))
+						player.PlayerConnection.Close()
+					}
+				}
+
 				fmt.Println("Cleaning session:", sessionId)
 				delete(Sessions, sessionId)
 			}
