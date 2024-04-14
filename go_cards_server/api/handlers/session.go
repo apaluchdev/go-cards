@@ -44,7 +44,7 @@ func ConnectSession(c *gin.Context) {
 
 	// Get or create a session
 	if sessionId == uuid.Nil {
-		s = sessionmgr.CreateSession(gametypes.War)
+		s = sessionmgr.CreateSession(gametypes.Cheat)
 	} else {
 		s, err = sessionmgr.GetSession(sessionId)
 		if err != nil {

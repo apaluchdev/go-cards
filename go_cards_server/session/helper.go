@@ -19,7 +19,7 @@ func CreateSessionInfoMessage(s *Session) messages.SessionInfoMessage {
 		SessionId:        s.SessionId,
 		SessionStartTime: s.SessionStartTime,
 		Players:          players,
-		MessageInfo: messages.Message{
+		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.SessionInfoMessageType,
 			MessageTimestamp: time.Now(),
 		},
@@ -32,7 +32,7 @@ func CreateSessionStartedMessage(s *Session, userId uuid.UUID) messages.SessionS
 		SessionStartTime: s.SessionStartTime,
 		Players:          s.Players,
 		PlayerId:         userId,
-		MessageInfo: messages.Message{
+		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.SessionStartedMessageType,
 			MessageTimestamp: time.Now(),
 		},
@@ -42,7 +42,7 @@ func CreateSessionStartedMessage(s *Session, userId uuid.UUID) messages.SessionS
 func CreateSessionEndedMessage(s *Session) messages.SessionEndedMessage {
 	return messages.SessionEndedMessage{
 		SessionId: s.SessionId,
-		MessageInfo: messages.Message{
+		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.SessionInfoMessageType,
 			MessageTimestamp: time.Now(),
 		},
@@ -54,7 +54,7 @@ func CreateGameStartedMessage(s *Session) messages.GameStartedMessage {
 		SessionId:        s.SessionId,
 		SessionStartTime: s.SessionStartTime,
 		Players:          s.Players,
-		MessageInfo: messages.Message{
+		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.GameStartedMessageType,
 			MessageTimestamp: time.Now(),
 		},
@@ -65,7 +65,7 @@ func CreatePlayerReadyMessage(playerId uuid.UUID, playerReady bool) messages.Pla
 	return messages.PlayerReadyMessage{
 		PlayerId:    playerId.String(),
 		PlayerReady: playerReady,
-		MessageInfo: messages.Message{
+		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.PlayerReadyMessageType,
 			MessageTimestamp: time.Now(),
 		},
@@ -76,19 +76,29 @@ func CreatePlayerJoinedMessage(player *player.Player) messages.PlayerJoinedMessa
 	return messages.PlayerJoinedMessage{
 		PlayerId:   player.PlayerId.String(),
 		PlayerName: player.PlayerName,
-		MessageInfo: messages.Message{
+		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.PlayerJoinedMessageType,
 			MessageTimestamp: time.Now(),
 		},
 	}
 }
 
-func CreateCardsPlayedMessage(playerId uuid.UUID, cards []cards.Card, targetId uuid.UUID) messages.CardsPlayedMessage {
+func CreatePlayerTurnMessage(playerId string) messages.PlayerTurnMessage {
+	return messages.PlayerTurnMessage{
+		PlayerId: playerId,
+		MessageInfo: messages.MessageInfo{
+			MessageType:      messages.PlayerTurnMessageType,
+			MessageTimestamp: time.Now(),
+		},
+	}
+}
+
+func CreateCardsPlayedMessage(playerId string, cards []cards.Card, targetId string) messages.CardsPlayedMessage {
 	return messages.CardsPlayedMessage{
 		PlayerId: playerId,
 		Cards:    cards,
 		TargetId: targetId,
-		MessageInfo: messages.Message{
+		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.CardsPlayedMessageType,
 			MessageTimestamp: time.Now(),
 		},
@@ -99,7 +109,7 @@ func CreateCardsDealtMessage(playerId uuid.UUID, cards []cards.Card) messages.Ca
 	return messages.CardsDealtMessage{
 		PlayerId: playerId,
 		Cards:    cards,
-		MessageInfo: messages.Message{
+		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.CardsDealtMessageType,
 			MessageTimestamp: time.Now(),
 		},

@@ -9,9 +9,11 @@ import (
 )
 
 func (s *Session) handleMessage(msg *messages.Message, p *player.Player) error {
-	switch msg.MessageType {
+	switch msg.MessageInfo.MessageType {
 	case messages.PlayerReadyMessageType:
-		s.handlePlayerReadyMessage(msg, p)
+		s.handlePlayerReadyMessage(msg.MessageBytes, p)
+	case messages.CardsPlayedMessageType:
+		// s.handleCardsPlayedMessage(msg)
 	default:
 		fmt.Println("Unknown message type")
 	}
@@ -19,16 +21,10 @@ func (s *Session) handleMessage(msg *messages.Message, p *player.Player) error {
 	return nil
 }
 
-func (s *Session) handlePlayerReadyMessage(msg *messages.Message, p *player.Player) error {
-	var playerReadyMessage *messages.PlayerReadyMessage
+func (s *Session) handlePlayerReadyMessage(msg []byte, p *player.Player) error {
+	playerReadyMessage := &messages.PlayerReadyMessage{}
 
-	msgBytes, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(msgBytes, &playerReadyMessage)
-	if err != nil {
+	if err := json.Unmarshal(msg, playerReadyMessage); err != nil {
 		return err
 	}
 

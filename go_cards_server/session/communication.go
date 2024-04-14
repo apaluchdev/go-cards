@@ -33,16 +33,17 @@ func (s *Session) Communicate(playerId uuid.UUID) {
 
 		s.SessionLastMessageTime = time.Now()
 
-		playerMessage, err := messages.UnmarshalByteMessage(msg)
+		message, err := messages.UnmarshalByteMessage(msg)
 		if err != nil {
 			fmt.Println("Error unmarshalling client message: ", err)
 			continue
 		}
-
+		
+		message.MessageBytes = msg
 		// Allow the session to do any processing of the message first
-		s.handleMessage(playerMessage, s.Players[playerId])
+		s.handleMessage(message, s.Players[playerId])
 
 		// Send the message off to the game channel to be handled by whichever game is being played
-		s.GameChannel <- playerMessage
+		s.GameChannel <- &messages.TypedByteMessage{MessageBytes: &msg, MessageType: message.MessageInfo.MessageType, SentBy: playerId}
 	}
 }

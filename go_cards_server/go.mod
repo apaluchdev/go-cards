@@ -2,10 +2,7 @@ module example.com/go_cards_server
 
 go 1.21.7
 
-require (
-	github.com/gin-gonic/gin v1.9.1
-	github.com/mitchellh/mapstructure v1.5.0
-)
+require github.com/gin-gonic/gin v1.9.1
 
 require (
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect

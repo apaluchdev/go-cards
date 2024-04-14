@@ -5,10 +5,10 @@ import (
 	"log"
 	"time"
 
+	"example.com/go_cards_server/cheat"
 	"example.com/go_cards_server/gametypes"
 	"example.com/go_cards_server/player"
 	"example.com/go_cards_server/session"
-	"example.com/go_cards_server/war"
 	"github.com/google/uuid"
 )
 
@@ -33,9 +33,9 @@ func CreateSession(gameType gametypes.GameType) *session.Session {
 	Sessions[session.SessionId] = session
 
 	switch gameType {
-	case gametypes.War:
-		var warGame = war.CreateNewWarSession(session)
-		log.Println("Created new War session ", warGame) // TODO store this somewhere so we can track it
+	case gametypes.Cheat:
+		var cheatGame = cheat.CreateNewCheatSession(session)
+		log.Println("Created new War session ", cheatGame) // TODO store this somewhere so we can track it
 	default:
 		log.Println("Unknown game type")
 	}
@@ -54,7 +54,7 @@ func sessionCleaner() {
 	for range ticker.C {
 		for sessionId, session := range Sessions {
 			if time.Since(session.SessionLastMessageTime) > 60*time.Second {
-				session.EndSession();
+				session.EndSession()
 				session.Active = false
 
 				// Ensure each player connection is closed

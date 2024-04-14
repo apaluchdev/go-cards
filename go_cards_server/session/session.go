@@ -10,13 +10,13 @@ import (
 )
 
 type Session struct {
-	SessionId              uuid.UUID                    `json:"sessionId"`
-	SessionStartTime       time.Time                    `json:"sessionStartTime"`
-	SessionLastMessageTime time.Time                    `json:"sessionLastMessageTime"`
-	Players                map[uuid.UUID]*player.Player `json:"players"`
-	GameChannel            chan *messages.Message       `json:"-"`
-	MaxPlayers             int                          `json:"maxPlayers"`
-	Active                 bool                         `json:"active"`
+	SessionId              uuid.UUID                       `json:"sessionId"`
+	SessionStartTime       time.Time                       `json:"sessionStartTime"`
+	SessionLastMessageTime time.Time                       `json:"sessionLastMessageTime"`
+	Players                map[uuid.UUID]*player.Player    `json:"players"`
+	GameChannel            chan *messages.TypedByteMessage `json:"-"`
+	MaxPlayers             int                             `json:"maxPlayers"`
+	Active                 bool                            `json:"active"`
 }
 
 func CreateSession() *Session {
@@ -24,7 +24,7 @@ func CreateSession() *Session {
 	sessionId := uuid.New()
 
 	// Create a new session
-	session := &Session{SessionId: sessionId, SessionStartTime: time.Now(), GameChannel: make(chan *messages.Message), Active: true, MaxPlayers: 0}
+	session := &Session{SessionId: sessionId, SessionStartTime: time.Now(), GameChannel: make(chan *messages.TypedByteMessage), Active: true, MaxPlayers: 0}
 	session.Players = make(map[uuid.UUID]*player.Player)
 
 	return session
