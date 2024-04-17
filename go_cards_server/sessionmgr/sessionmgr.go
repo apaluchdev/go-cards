@@ -7,7 +7,7 @@ import (
 
 	"example.com/go_cards_server/cheat"
 	"example.com/go_cards_server/gametypes"
-	"example.com/go_cards_server/player"
+	"example.com/go_cards_server/user"
 	"example.com/go_cards_server/session"
 	"github.com/google/uuid"
 )
@@ -43,8 +43,8 @@ func CreateSession(gameType gametypes.GameType) *session.Session {
 	return session
 }
 
-func HandlePlayerJoined(s *session.Session, player *player.Player) {
-	s.AddPlayerToSession(player)
+func HandleUserJoined(s *session.Session, user *user.User) {
+	s.AddUserToSession(user)
 }
 
 func sessionCleaner() {
@@ -57,11 +57,11 @@ func sessionCleaner() {
 				session.EndSession()
 				session.Active = false
 
-				// Ensure each player connection is closed
-				for _, player := range session.Players {
-					if player.PlayerConnection != nil {
-						player.PlayerConnection.WriteMessage(1, []byte("Session ending due to inactivity"))
-						player.PlayerConnection.Close()
+				// Ensure each user connection is closed
+				for _, user := range session.Users {
+					if user.UserConnection != nil {
+						user.UserConnection.WriteMessage(1, []byte("Session ending due to inactivity"))
+						user.UserConnection.Close()
 					}
 				}
 

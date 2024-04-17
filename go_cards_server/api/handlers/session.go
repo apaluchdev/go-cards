@@ -5,7 +5,7 @@ import (
 
 	"example.com/go_cards_server/api/cookieutil"
 	"example.com/go_cards_server/gametypes"
-	"example.com/go_cards_server/player"
+	"example.com/go_cards_server/user"
 	"example.com/go_cards_server/session"
 	"example.com/go_cards_server/sessionmgr"
 	"github.com/gin-gonic/gin"
@@ -53,12 +53,12 @@ func ConnectSession(c *gin.Context) {
 		}
 	}
 
-	if (len(s.Players) >= s.MaxPlayers) && s.MaxPlayers != 0 {
+	if (len(s.Users) >= s.MaxUsers) && s.MaxUsers != 0 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Session is full"})
 		return
 	}
 
-	sessionmgr.HandlePlayerJoined(s, &player.Player{PlayerId: userIdUuid, PlayerName: username, PlayerConnection: conn})
+	sessionmgr.HandleUserJoined(s, &user.User{UserId: userIdUuid, UserName: username, UserConnection: conn})
 }
 
 func GetSession(c *gin.Context) {

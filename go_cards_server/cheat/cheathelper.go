@@ -5,6 +5,7 @@ import (
 
 	"example.com/go_cards_server/cards"
 	"example.com/go_cards_server/messages"
+	"example.com/go_cards_server/session"
 	"github.com/google/uuid"
 )
 
@@ -72,11 +73,56 @@ func GetCheatDeck() *cards.Deck {
 	return &cards.Deck{Cards: cheatCards}
 }
 
-func CreateDeclaredCheatMessage(playerId uuid.UUID) messages.DeclaredCheatMessage {
-	return messages.DeclaredCheatMessage{
+func CreateDeclaredCheatMessage(playerId uuid.UUID) DeclaredCheatMessage {
+	return DeclaredCheatMessage{
 		PlayerId: playerId.String(),
 		MessageInfo: messages.MessageInfo{
+			MessageType:      messages.DeclaredCheatMessageType,
+			MessageTimestamp: time.Now(),
+		},
+	}
+}
+
+func CreatePlayerTurnMessage(playerId string) PlayerTurnMessage {
+	return PlayerTurnMessage{
+		PlayerId: playerId,
+		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.PlayerTurnMessageType,
+			MessageTimestamp: time.Now(),
+		},
+	}
+}
+
+func CreateCardsPlayedMessage(playerId string, cards []cards.Card, targetId string) CardsPlayedMessage {
+	return CardsPlayedMessage{
+		PlayerId:   playerId,
+		Cards:    cards,
+		TargetId: targetId,
+		MessageInfo: messages.MessageInfo{
+			MessageType:      messages.CardsPlayedMessageType,
+			MessageTimestamp: time.Now(),
+		},
+	}
+}
+
+func CreateCardsDealtMessage(playerId uuid.UUID, cards []cards.Card) CardsDealtMessage {
+	return CardsDealtMessage{
+		PlayerId: playerId,
+		Cards:  cards,
+		MessageInfo: messages.MessageInfo{
+			MessageType:      messages.CardsDealtMessageType,
+			MessageTimestamp: time.Now(),
+		},
+	}
+}
+
+func CreateGameStartedMessage(s *session.Session) GameStartedMessage {
+	return GameStartedMessage{
+		SessionId:        s.SessionId,
+		SessionStartTime: s.SessionStartTime,
+		Players:            s.Users,
+		MessageInfo: messages.MessageInfo{
+			MessageType:      messages.GameStartedMessageType,
 			MessageTimestamp: time.Now(),
 		},
 	}

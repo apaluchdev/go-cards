@@ -5,15 +5,13 @@ import (
 	"fmt"
 
 	"example.com/go_cards_server/messages"
-	"example.com/go_cards_server/player"
+	"example.com/go_cards_server/user"
 )
 
-func (s *Session) handleMessage(msg *messages.Message, p *player.Player) error {
+func (s *Session) handleMessage(msg *messages.Message, p *user.User) error {
 	switch msg.MessageInfo.MessageType {
-	case messages.PlayerReadyMessageType:
-		s.handlePlayerReadyMessage(msg.MessageBytes, p)
-	case messages.CardsPlayedMessageType:
-		// s.handleCardsPlayedMessage(msg)
+	case messages.UserReadyMessageType:
+		s.handleUserReadyMessage(msg.MessageBytes, p)
 	default:
 		fmt.Println("Unknown message type")
 	}
@@ -21,16 +19,16 @@ func (s *Session) handleMessage(msg *messages.Message, p *player.Player) error {
 	return nil
 }
 
-func (s *Session) handlePlayerReadyMessage(msg []byte, p *player.Player) error {
-	playerReadyMessage := &messages.PlayerReadyMessage{}
+func (s *Session) handleUserReadyMessage(msg []byte, p *user.User) error {
+	userReadyMessage := &messages.UserReadyMessage{}
 
-	if err := json.Unmarshal(msg, playerReadyMessage); err != nil {
+	if err := json.Unmarshal(msg, userReadyMessage); err != nil {
 		return err
 	}
 
-	p.PlayerReady = playerReadyMessage.PlayerReady
+	p.UserReady = userReadyMessage.UserReady
 
-	s.BroadcastMessage(CreatePlayerReadyMessage(p.PlayerId, playerReadyMessage.PlayerReady))
+	s.BroadcastMessage(CreateUserReadyMessage(p.UserId, userReadyMessage.UserReady))
 
 	return nil
 }

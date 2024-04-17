@@ -4,25 +4,25 @@ import (
 	"encoding/json"
 	"time"
 
-	"example.com/go_cards_server/cards"
-	"example.com/go_cards_server/player"
+	"example.com/go_cards_server/user"
 	"github.com/google/uuid"
 )
 
 type MessageType string
 
 const (
-	PlayerReadyMessageType    MessageType = "playerReady"
+	UserReadyMessageType      MessageType = "userReady"
 	SessionStartedMessageType MessageType = "sessionStarted"
 	GameStartedMessageType    MessageType = "gameStarted"
 	SessionInfoMessageType    MessageType = "sessionInfo"
 	SessionEndedMessageType   MessageType = "sessionEnded"
-	PlayerJoinedMessageType   MessageType = "playerJoined"
+	UserJoinedMessageType     MessageType = "userJoined"
 	GameMessageType           MessageType = "gameMessage"
 	PlayerTurnMessageType     MessageType = "playerTurn"
 	CardsPlayedMessageType    MessageType = "cardsPlayed"
 	CardsDealtMessageType     MessageType = "cardsDealt"
 	DeclaredCheatMessageType  MessageType = "declaredCheat"
+
 	// Add more message types as needed
 )
 
@@ -53,26 +53,26 @@ func UnmarshalByteMessage(msg []byte) (*Message, error) {
 	return message, nil
 }
 
-type PlayerReadyMessage struct {
+type UserReadyMessage struct {
 	MessageInfo MessageInfo `json:"messageInfo"`
-	PlayerId    string      `json:"playerId"`
-	PlayerReady bool        `json:"playerReady"`
+	UserId      string      `json:"userId"`
+	UserReady   bool        `json:"userReady"`
 }
 
 type SessionInfoMessage struct {
 	MessageInfo      MessageInfo          `json:"messageInfo"`
 	SessionId        uuid.UUID            `json:"sessionId"`
 	SessionStartTime time.Time            `json:"sessionStartTime"`
-	Players          map[uuid.UUID]string `json:"players"`
+	Users            map[uuid.UUID]string `json:"users"`
 }
 
 type SessionStartedMessage struct {
-	MessageInfo            MessageInfo                  `json:"messageInfo"`
-	SessionId              uuid.UUID                    `json:"sessionId"`
-	SessionStartTime       time.Time                    `json:"sessionStartTime"`
-	SessionLastMessageTime time.Time                    `json:"sessionLastMessageTime"`
-	Players                map[uuid.UUID]*player.Player `json:"players"`
-	PlayerId               uuid.UUID                    `json:"playerId"`
+	MessageInfo            MessageInfo              `json:"messageInfo"`
+	SessionId              uuid.UUID                `json:"sessionId"`
+	SessionStartTime       time.Time                `json:"sessionStartTime"`
+	SessionLastMessageTime time.Time                `json:"sessionLastMessageTime"`
+	Users                  map[uuid.UUID]*user.User `json:"users"`
+	UserId                 uuid.UUID                `json:"userId"`
 }
 
 type SessionEndedMessage struct {
@@ -80,40 +80,8 @@ type SessionEndedMessage struct {
 	SessionId   uuid.UUID   `json:"sessionId"`
 }
 
-type GameStartedMessage struct {
-	MessageInfo            MessageInfo                  `json:"messageInfo"`
-	SessionId              uuid.UUID                    `json:"sessionId"`
-	SessionStartTime       time.Time                    `json:"sessionStartTime"`
-	SessionLastMessageTime time.Time                    `json:"sessionLastMessageTime"`
-	Players                map[uuid.UUID]*player.Player `json:"players"`
-	PlayerId               uuid.UUID                    `json:"playerId"`
-}
-
-type CardsPlayedMessage struct {
-	MessageInfo MessageInfo  `json:"messageInfo"`
-	PlayerId    string       `json:"playerId"`
-	Cards       []cards.Card `json:"cards"`
-	TargetId    string       `json:"targetId"`
-}
-
-type PlayerJoinedMessage struct {
+type UserJoinedMessage struct {
 	MessageInfo MessageInfo `json:"messageInfo"`
-	PlayerId    string      `json:"playerId"`
-	PlayerName  string      `json:"playerName"`
-}
-
-type PlayerTurnMessage struct {
-	MessageInfo MessageInfo `json:"messageInfo"`
-	PlayerId    string      `json:"playerId"`
-}
-
-type DeclaredCheatMessage struct {
-	PlayerId    string      `json:"playerId"`
-	MessageInfo MessageInfo `json:"messageInfo"`
-}
-
-type CardsDealtMessage struct {
-	MessageInfo MessageInfo  `json:"messageInfo"`
-	PlayerId    uuid.UUID    `json:"playerId"`
-	Cards       []cards.Card `json:"cards"`
+	UserId      string      `json:"userId"`
+	UserName    string      `json:"userName"`
 }

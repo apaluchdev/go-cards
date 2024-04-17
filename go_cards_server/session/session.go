@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"example.com/go_cards_server/messages"
-	"example.com/go_cards_server/player"
+	"example.com/go_cards_server/user"
 	"github.com/google/uuid"
 )
 
@@ -13,9 +13,9 @@ type Session struct {
 	SessionId              uuid.UUID                       `json:"sessionId"`
 	SessionStartTime       time.Time                       `json:"sessionStartTime"`
 	SessionLastMessageTime time.Time                       `json:"sessionLastMessageTime"`
-	Players                map[uuid.UUID]*player.Player    `json:"players"`
+	Users                map[uuid.UUID]*user.User    `json:"users"`
 	GameChannel            chan *messages.TypedByteMessage `json:"-"`
-	MaxPlayers             int                             `json:"maxPlayers"`
+	MaxUsers             int                             `json:"maxUsers"`
 	Active                 bool                            `json:"active"`
 }
 
@@ -24,8 +24,8 @@ func CreateSession() *Session {
 	sessionId := uuid.New()
 
 	// Create a new session
-	session := &Session{SessionId: sessionId, SessionStartTime: time.Now(), GameChannel: make(chan *messages.TypedByteMessage), Active: true, MaxPlayers: 0}
-	session.Players = make(map[uuid.UUID]*player.Player)
+	session := &Session{SessionId: sessionId, SessionStartTime: time.Now(), GameChannel: make(chan *messages.TypedByteMessage), Active: true, MaxUsers: 0}
+	session.Users = make(map[uuid.UUID]*user.User)
 
 	return session
 }
@@ -33,34 +33,34 @@ func CreateSession() *Session {
 func (s *Session) EndSession() {
 	s.Active = false
 
-	// Ensure each player connection is closed
-	for _, player := range s.Players {
-		if player.PlayerConnection != nil {
-			player.SendMessage(CreateSessionEndedMessage(s))
-			player.PlayerConnection.Close()
+	// Ensure each user connection is closed
+	for _, user := range s.Users {
+		if user.UserConnection != nil {
+			user.SendMessage(CreateSessionEndedMessage(s))
+			user.UserConnection.Close()
 		}
 	}
 
 	log.Println("Cleaning session:", s.SessionId)
 }
 
-func (s *Session) AddPlayerToSession(player *player.Player) {
-	s.Players[player.PlayerId] = player
+func (s *Session) AddUserToSession(user *user.User) {
+	s.Users[user.UserId] = user
 
-	player.SendMessage(CreateSessionStartedMessage(s, player.PlayerId))
-	s.BroadcastMessage(CreatePlayerJoinedMessage(s.Players[player.PlayerId]))
+	user.SendMessage(CreateSessionStartedMessage(s, user.UserId))
+	s.BroadcastMessage(CreateUserJoinedMessage(s.Users[user.UserId]))
 
-	// Handle the game communication with this player
-	go s.Communicate(player.PlayerId)
+	// Handle the game communication with this user
+	go s.Communicate(user.UserId)
 }
 
-func (s *Session) ArePlayersReady() bool {
-	if len(s.Players) < 2 {
+func (s *Session) AreUsersReady() bool {
+	if len(s.Users) < 2 {
 		return false
 	}
 
-	for _, player := range s.Players {
-		if !player.PlayerReady {
+	for _, user := range s.Users {
+		if !user.UserReady {
 			return false
 		}
 	}

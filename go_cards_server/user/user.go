@@ -1,4 +1,4 @@
-package player
+package user
 
 import (
 	"encoding/json"
@@ -9,16 +9,16 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Player struct {
-	PlayerId         uuid.UUID       `json:"playerId"`
-	PlayerName       string          `json:"playerName"`
-	PlayerReady      bool            `json:"playerReady"`
-	PlayerConnection *websocket.Conn `json:"-"`
+type User struct {
+	UserId         uuid.UUID       `json:"userId"`
+	UserName       string          `json:"userName"`
+	UserReady      bool            `json:"userReady"`
+	UserConnection *websocket.Conn `json:"-"`
 }
 
-func (p *Player) SendMessage(message any) error {
-	if p.PlayerConnection == nil {
-		return errors.New("Player connection is nil")
+func (p *User) SendMessage(message any) error {
+	if p.UserConnection == nil {
+		return errors.New("User connection is nil")
 	}
 
 	// Marshal the message to JSON
@@ -28,7 +28,7 @@ func (p *Player) SendMessage(message any) error {
 		return err
 	}
 
-	err = p.PlayerConnection.WriteMessage(websocket.TextMessage, messageJSON)
+	err = p.UserConnection.WriteMessage(websocket.TextMessage, messageJSON)
 
 	// If there was an error writing to the client, return false
 	if err != nil {
