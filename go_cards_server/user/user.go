@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -17,6 +18,7 @@ type User struct {
 }
 
 func (p *User) SendMessage(message any) error {
+	log.Println("Sending message: ", message)
 	if p.UserConnection == nil {
 		return errors.New("User connection is nil")
 	}

@@ -11,6 +11,22 @@ type Deck struct {
 	Cards []Card
 }
 
+var CardValues = map[int]string{
+	0:  "2",
+	1:  "3",
+	2:  "4",
+	3:  "5",
+	4:  "6",
+	5:  "7",
+	6:  "8",
+	7:  "9",
+	8:  "10",
+	9:  "J",
+	10: "Q",
+	11: "K",
+	12: "A",
+}
+
 func (d *Deck) Shuffle() {
 	for i := range d.Cards {
 		j := i + rand.Intn(len(d.Cards)-i)

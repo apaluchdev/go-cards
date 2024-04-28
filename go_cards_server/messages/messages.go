@@ -14,6 +14,7 @@ const (
 	UserReadyMessageType      MessageType = "userReady"
 	SessionStartedMessageType MessageType = "sessionStarted"
 	GameStartedMessageType    MessageType = "gameStarted"
+	CheatResultMessageType    MessageType = "cheatResult"
 	SessionInfoMessageType    MessageType = "sessionInfo"
 	SessionEndedMessageType   MessageType = "sessionEnded"
 	UserJoinedMessageType     MessageType = "userJoined"

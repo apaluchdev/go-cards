@@ -13,9 +13,9 @@ type Session struct {
 	SessionId              uuid.UUID                       `json:"sessionId"`
 	SessionStartTime       time.Time                       `json:"sessionStartTime"`
 	SessionLastMessageTime time.Time                       `json:"sessionLastMessageTime"`
-	Users                map[uuid.UUID]*user.User    `json:"users"`
+	Users                  map[uuid.UUID]*user.User        `json:"users"`
 	GameChannel            chan *messages.TypedByteMessage `json:"-"`
-	MaxUsers             int                             `json:"maxUsers"`
+	MaxUsers               int                             `json:"maxUsers"`
 	Active                 bool                            `json:"active"`
 }
 
@@ -41,6 +41,7 @@ func (s *Session) EndSession() {
 		}
 	}
 
+	log.Println("Last message was at: ", s.SessionLastMessageTime)
 	log.Println("Cleaning session:", s.SessionId)
 }
 

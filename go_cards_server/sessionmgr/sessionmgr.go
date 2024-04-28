@@ -48,7 +48,7 @@ func HandleUserJoined(s *session.Session, user *user.User) {
 }
 
 func sessionCleaner() {
-	ticker := time.NewTicker(10 * time.Minute)
+	ticker := time.NewTicker(20 * time.Minute)
 	defer ticker.Stop()
 
 	for range ticker.C {

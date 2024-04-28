@@ -83,9 +83,11 @@ func CreateDeclaredCheatMessage(playerId uuid.UUID) DeclaredCheatMessage {
 	}
 }
 
-func CreatePlayerTurnMessage(playerId string) PlayerTurnMessage {
+func CreatePlayerTurnMessage(playerId string, playerInstruction string, discardPileSize int) PlayerTurnMessage {
 	return PlayerTurnMessage{
-		PlayerId: playerId,
+		PlayerId:          playerId,
+		PlayerInstruction: playerInstruction,
+		DiscardPileSize:   discardPileSize,
 		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.PlayerTurnMessageType,
 			MessageTimestamp: time.Now(),
@@ -95,7 +97,7 @@ func CreatePlayerTurnMessage(playerId string) PlayerTurnMessage {
 
 func CreateCardsPlayedMessage(playerId string, cards []cards.Card, targetId string) CardsPlayedMessage {
 	return CardsPlayedMessage{
-		PlayerId:   playerId,
+		PlayerId: playerId,
 		Cards:    cards,
 		TargetId: targetId,
 		MessageInfo: messages.MessageInfo{
@@ -108,7 +110,7 @@ func CreateCardsPlayedMessage(playerId string, cards []cards.Card, targetId stri
 func CreateCardsDealtMessage(playerId uuid.UUID, cards []cards.Card) CardsDealtMessage {
 	return CardsDealtMessage{
 		PlayerId: playerId,
-		Cards:  cards,
+		Cards:    cards,
 		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.CardsDealtMessageType,
 			MessageTimestamp: time.Now(),
@@ -120,9 +122,20 @@ func CreateGameStartedMessage(s *session.Session) GameStartedMessage {
 	return GameStartedMessage{
 		SessionId:        s.SessionId,
 		SessionStartTime: s.SessionStartTime,
-		Players:            s.Users,
+		Players:          s.Users,
 		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.GameStartedMessageType,
+			MessageTimestamp: time.Now(),
+		},
+	}
+}
+
+func CreateCheatResultMessage(winnerId string, loserId string) CheatResultMessage {
+	return CheatResultMessage{
+		WinnerId: winnerId,
+		LoserId:  loserId,
+		MessageInfo: messages.MessageInfo{
+			MessageType:      messages.CheatResultMessageType,
 			MessageTimestamp: time.Now(),
 		},
 	}

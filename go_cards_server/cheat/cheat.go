@@ -7,32 +7,33 @@ import (
 
 	"example.com/go_cards_server/cards"
 	"example.com/go_cards_server/messages"
-	"example.com/go_cards_server/user"
 	"example.com/go_cards_server/session"
+	"example.com/go_cards_server/user"
 	"github.com/google/uuid"
 )
 
 type CheatPlayer struct {
 	User *user.User
-	Hand   []cards.Card
+	Hand []cards.Card
 }
 
 type Cheat struct {
 	GameStarted                   bool
 	Deck                          *cards.Deck
 	cheatSession                  *session.Session
-	userTurn                    uuid.UUID
+	userTurn                      uuid.UUID
 	turnCounter                   int
 	isWaitingForCheatDeclarations bool
 	CheatPlayers                  []*CheatPlayer
 	PlayedCards                   []cards.Card
-	ExpectedValue                 string
+	CurrentCardValueIndex         int
 	DiscardPile                   []cards.Card
+	CurrentValue                  string
 }
 
 func CreateNewCheatSession(s *session.Session) *Cheat {
 	s.MaxUsers = 2
-	var c = &Cheat{GameStarted: false, Deck: GetShuffledCheatDeck(), cheatSession: s, isWaitingForCheatDeclarations: false, userTurn: uuid.Nil, turnCounter: 0, CheatPlayers: make([]*CheatPlayer, 0)}
+	var c = &Cheat{GameStarted: false, Deck: GetShuffledCheatDeck(), cheatSession: s, isWaitingForCheatDeclarations: false, userTurn: uuid.Nil, turnCounter: 0, CurrentCardValueIndex: 0, CheatPlayers: make([]*CheatPlayer, 0)}
 	go c.Run()
 	return c
 }
@@ -58,6 +59,10 @@ func (w *Cheat) Run() {
 			if w.userTurn == uuid.Nil {
 				w.GetNextUserTurn()
 			}
+		}
+
+		for _, p := range w.CheatPlayers {
+			log.Println("Player ", p.User.UserName, " should have ", string(len(p.Hand)), " cards.")
 		}
 
 		switch msg.MessageType {
@@ -92,9 +97,36 @@ func (c *Cheat) handleCardsPlayedMessage(typedByteMessage *messages.TypedByteMes
 		log.Println("Cannot accept card played message currently")
 		return nil
 	}
+
 	c.PlayedCards = cardsPlayedMessage.Cards
+
+	// Validate the played cards
+	if len(c.PlayedCards) == 0 {
+		log.Println("No cards played")
+		return nil
+	}
+
+	// Move all the played cards from the player's hand to the discard pile
+	updatedHand := make([]cards.Card, 0)
+	for _, card := range c.PlayedCards {
+		for _, handCard := range c.CheatPlayers[c.turnCounter].Hand {
+			if handCard.Suit == card.Suit && handCard.Value == card.Value {
+				c.DiscardPile = append(c.DiscardPile, card)
+			} else {
+				updatedHand = append(updatedHand, handCard)
+			}
+		}
+	}
+	c.CheatPlayers[c.turnCounter].Hand = updatedHand
+
+	// Create the "hidden cards" to show the other players
+	cheatCards := make([]cards.Card, len(c.PlayedCards))
+	for i, _ := range c.PlayedCards {
+		cheatCards[i] = cards.Card{Suit: "Maybe", Value: "Maybe"}
+	}
+
 	// Broadcast the card played message to all users
-	c.cheatSession.BroadcastMessage(CreateCardsPlayedMessage(typedByteMessage.SentBy.String(), cardsPlayedMessage.Cards, cardsPlayedMessage.TargetId))
+	c.cheatSession.BroadcastMessage(CreateCardsPlayedMessage(typedByteMessage.SentBy.String(), cheatCards, cardsPlayedMessage.TargetId))
 
 	c.isWaitingForCheatDeclarations = true
 	go c.SetMaxWaitTimeForCheatDeclarations()
@@ -114,24 +146,42 @@ func (c *Cheat) handleDeclaredCheatMessage(typedByteMessage *messages.TypedByteM
 	// Cheat just has to check if the played cards are of the correct value, REDO THE BELOW
 	caughtCheat := false
 	for _, card := range c.PlayedCards {
-		if card.Value != c.ExpectedValue {
+		curValue := cards.CardValues[c.CurrentCardValueIndex]
+		if card.Value != curValue {
 			caughtCheat = true
 			break
 		}
 	}
 
+	// Give the discard pile to the appropriate player
 	if caughtCheat {
-		log.Println("Caught a cheat!")
-		// Add all cards including discard to the user who cheated
+		c.CheatPlayers[c.turnCounter].Hand = append(c.CheatPlayers[c.turnCounter].Hand, c.DiscardPile...)
+
+		// Send a message to the cheater to pickup the discard pile
+		c.CheatPlayers[c.turnCounter].User.SendMessage(CreateCardsDealtMessage(c.CheatPlayers[c.turnCounter].User.UserId, c.DiscardPile))
+
+		// Broadcast the cheat result message
+		c.cheatSession.BroadcastMessage(CreateCheatResultMessage(typedByteMessage.SentBy.String(), c.CheatPlayers[c.turnCounter].User.UserId.String()))
 
 	} else {
-		log.Println("Bad call!")
-		// Add all cards to the user who made the bad call
+		for _, cheatPlayer := range c.CheatPlayers {
+			if cheatPlayer.User.UserId == typedByteMessage.SentBy {
+				cheatPlayer.Hand = append(cheatPlayer.Hand, c.DiscardPile...)
+
+				// Send a message to the accuser to pickup the discard pile
+				cheatPlayer.User.SendMessage(CreateCardsDealtMessage(cheatPlayer.User.UserId, c.DiscardPile))
+
+				// Broadcast the cheat result message
+				c.cheatSession.BroadcastMessage(CreateCheatResultMessage(c.CheatPlayers[c.turnCounter].User.UserId.String(), typedByteMessage.SentBy.String()))
+				break
+			}
+		}
 	}
 
-	// Broadcast if declared cheat was successful
+	// Empty the discard pile, should always be empty after a cheat declaration
+	c.DiscardPile = make([]cards.Card, 0)
 
-	timer := time.NewTimer(3 * time.Second)
+	timer := time.NewTimer(5 * time.Second)
 	<-timer.C
 
 	c.EndCheatDeclaration()
@@ -156,21 +206,24 @@ func (c *Cheat) HandleGameStart() {
 	c.DealCards()
 
 	c.userTurn = c.CheatPlayers[0].User.UserId
-	c.cheatSession.BroadcastMessage(CreatePlayerTurnMessage(c.userTurn.String()))
+	c.cheatSession.BroadcastMessage(CreatePlayerTurnMessage(c.userTurn.String(), "Play one or more "+cards.CardValues[c.CurrentCardValueIndex]+"'s", len(c.DiscardPile)))
 }
 
 func (c *Cheat) GetNextUserTurn() {
+	c.CurrentCardValueIndex = (c.CurrentCardValueIndex + 1) % len(cards.CardValues)
 	c.turnCounter++
 	c.turnCounter = c.turnCounter % len(c.CheatPlayers)
 	c.userTurn = c.CheatPlayers[c.turnCounter].User.UserId
-	c.cheatSession.BroadcastMessage(CreatePlayerTurnMessage(c.userTurn.String()))
+	c.cheatSession.BroadcastMessage(CreatePlayerTurnMessage(c.userTurn.String(), "Play one or more "+cards.CardValues[c.CurrentCardValueIndex]+"'s", len(c.DiscardPile)))
 }
 
 func (c *Cheat) SetMaxWaitTimeForCheatDeclarations() {
-	timer := time.NewTimer(10 * time.Second)
+	timer := time.NewTimer(9 * time.Second)
 	<-timer.C
 
-	c.EndCheatDeclaration()
+	if c.isWaitingForCheatDeclarations {
+		c.EndCheatDeclaration()
+	}
 }
 
 func (c *Cheat) EndCheatDeclaration() {

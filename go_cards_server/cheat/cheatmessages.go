@@ -21,8 +21,10 @@ type GameStartedMessage struct {
 }
 
 type PlayerTurnMessage struct {
-	MessageInfo messages.MessageInfo `json:"messageInfo"`
-	PlayerId    string               `json:"playerId"`
+	MessageInfo       messages.MessageInfo `json:"messageInfo"`
+	PlayerInstruction string               `json:"playerInstruction"`
+	PlayerId          string               `json:"playerId"`
+	DiscardPileSize   int                  `json:"discardPileSize"`
 }
 
 type DeclaredCheatMessage struct {
@@ -41,4 +43,10 @@ type CardsPlayedMessage struct {
 	PlayerId    string               `json:"playerId"`
 	Cards       []cards.Card         `json:"cards"`
 	TargetId    string               `json:"targetId"`
+}
+
+type CheatResultMessage struct {
+	MessageInfo messages.MessageInfo `json:"messageInfo"`
+	WinnerId    string               `json:"winnerId"`
+	LoserId     string               `json:"loserId"`
 }

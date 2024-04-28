@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"example.com/go_cards_server/messages"
@@ -10,6 +11,7 @@ import (
 
 // BroadcastMessage sends a message to all players in a session
 func (s *Session) BroadcastMessage(message any) {
+	log.Println("Broadcasting message: ", message)
 	for _, player := range s.Users {
 		err := player.SendMessage(message)
 		if err != nil {
