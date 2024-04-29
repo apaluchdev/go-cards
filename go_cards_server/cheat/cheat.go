@@ -9,6 +9,7 @@ import (
 	"example.com/go_cards_server/messages"
 	"example.com/go_cards_server/session"
 	"example.com/go_cards_server/user"
+	"github.com/ahmetalpbalkan/go-linq"
 	"github.com/google/uuid"
 )
 
@@ -61,10 +62,6 @@ func (w *Cheat) Run() {
 			}
 		}
 
-		for _, p := range w.CheatPlayers {
-			log.Println("Player ", p.User.UserName, " should have ", string(len(p.Hand)), " cards.")
-		}
-
 		switch msg.MessageType {
 		case messages.CardsPlayedMessageType:
 			w.handleCardsPlayedMessage(msg)
@@ -98,6 +95,7 @@ func (c *Cheat) handleCardsPlayedMessage(typedByteMessage *messages.TypedByteMes
 		return nil
 	}
 
+	// Set the played cards
 	c.PlayedCards = cardsPlayedMessage.Cards
 
 	// Validate the played cards
@@ -106,24 +104,19 @@ func (c *Cheat) handleCardsPlayedMessage(typedByteMessage *messages.TypedByteMes
 		return nil
 	}
 
-	// Move all the played cards from the player's hand to the discard pile
-	updatedHand := make([]cards.Card, 0)
-	for _, card := range c.PlayedCards {
-		for _, handCard := range c.CheatPlayers[c.turnCounter].Hand {
-			if handCard.Suit == card.Suit && handCard.Value == card.Value {
-				c.DiscardPile = append(c.DiscardPile, card)
-			} else {
-				updatedHand = append(updatedHand, handCard)
-			}
-		}
-	}
-	c.CheatPlayers[c.turnCounter].Hand = updatedHand
+	// Remove the played cards from the player's hand
+	linq.From(c.CheatPlayers[c.turnCounter].Hand).Where(func(handCard interface{}) bool {
+		return !linq.From(c.PlayedCards).Contains(handCard)
+	}).ToSlice(&c.CheatPlayers[c.turnCounter].Hand)
+
+	// Update the discard pile
+	linq.From(c.PlayedCards).Concat(linq.From(c.DiscardPile)).ToSlice(&c.DiscardPile)
 
 	// Create the "hidden cards" to show the other players
 	cheatCards := make([]cards.Card, len(c.PlayedCards))
-	for i, _ := range c.PlayedCards {
-		cheatCards[i] = cards.Card{Suit: "Maybe", Value: "Maybe"}
-	}
+	linq.From(c.PlayedCards).Select(func(card interface{}) interface{} {
+		return cards.Card{Suit: "Maybe", Value: "Maybe"}
+	}).ToSlice(&cheatCards)
 
 	// Broadcast the card played message to all users
 	c.cheatSession.BroadcastMessage(CreateCardsPlayedMessage(typedByteMessage.SentBy.String(), cheatCards, cardsPlayedMessage.TargetId))
@@ -143,15 +136,10 @@ func (c *Cheat) handleDeclaredCheatMessage(typedByteMessage *messages.TypedByteM
 	c.userTurn = uuid.Nil
 	c.cheatSession.BroadcastMessage(CreateDeclaredCheatMessage(typedByteMessage.SentBy))
 
-	// Cheat just has to check if the played cards are of the correct value, REDO THE BELOW
-	caughtCheat := false
-	for _, card := range c.PlayedCards {
-		curValue := cards.CardValues[c.CurrentCardValueIndex]
-		if card.Value != curValue {
-			caughtCheat = true
-			break
-		}
-	}
+	// Check if the played cards were a cheat
+	caughtCheat := linq.From(c.PlayedCards).AnyWith(func(card interface{}) bool {
+		return card.(cards.Card).Value != cards.CardValues[c.CurrentCardValueIndex]
+	})
 
 	// Give the discard pile to the appropriate player
 	if caughtCheat {
@@ -161,7 +149,7 @@ func (c *Cheat) handleDeclaredCheatMessage(typedByteMessage *messages.TypedByteM
 		c.CheatPlayers[c.turnCounter].User.SendMessage(CreateCardsDealtMessage(c.CheatPlayers[c.turnCounter].User.UserId, c.DiscardPile))
 
 		// Broadcast the cheat result message
-		c.cheatSession.BroadcastMessage(CreateCheatResultMessage(typedByteMessage.SentBy.String(), c.CheatPlayers[c.turnCounter].User.UserId.String()))
+		c.cheatSession.BroadcastMessage(CreateCheatResultMessage(typedByteMessage.SentBy.String(), c.CheatPlayers[c.turnCounter].User.UserId.String(), c.PlayedCards))
 
 	} else {
 		for _, cheatPlayer := range c.CheatPlayers {
@@ -172,7 +160,7 @@ func (c *Cheat) handleDeclaredCheatMessage(typedByteMessage *messages.TypedByteM
 				cheatPlayer.User.SendMessage(CreateCardsDealtMessage(cheatPlayer.User.UserId, c.DiscardPile))
 
 				// Broadcast the cheat result message
-				c.cheatSession.BroadcastMessage(CreateCheatResultMessage(c.CheatPlayers[c.turnCounter].User.UserId.String(), typedByteMessage.SentBy.String()))
+				c.cheatSession.BroadcastMessage(CreateCheatResultMessage(c.CheatPlayers[c.turnCounter].User.UserId.String(), typedByteMessage.SentBy.String(), []cards.Card{}))
 				break
 			}
 		}

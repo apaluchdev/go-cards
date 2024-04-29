@@ -130,10 +130,11 @@ func CreateGameStartedMessage(s *session.Session) GameStartedMessage {
 	}
 }
 
-func CreateCheatResultMessage(winnerId string, loserId string) CheatResultMessage {
+func CreateCheatResultMessage(winnerId string, loserId string, cards []cards.Card) CheatResultMessage {
 	return CheatResultMessage{
 		WinnerId: winnerId,
 		LoserId:  loserId,
+		Cards:   cards,
 		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.CheatResultMessageType,
 			MessageTimestamp: time.Now(),

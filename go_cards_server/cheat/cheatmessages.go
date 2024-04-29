@@ -49,4 +49,5 @@ type CheatResultMessage struct {
 	MessageInfo messages.MessageInfo `json:"messageInfo"`
 	WinnerId    string               `json:"winnerId"`
 	LoserId     string               `json:"loserId"`
+	Cards       []cards.Card         `json:"cards"`
 }
