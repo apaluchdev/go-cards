@@ -30,15 +30,17 @@ type Cheat struct {
 	CurrentCardValueIndex         int
 	DiscardPile                   []cards.Card
 	CurrentValue                  string
+	gameOver                      bool
 }
 
 func CreateNewCheatSession(s *session.Session) *Cheat {
-	s.MaxUsers = 2
-	var c = &Cheat{GameStarted: false, Deck: GetShuffledCheatDeck(), cheatSession: s, isWaitingForCheatDeclarations: false, userTurn: uuid.Nil, turnCounter: 0, CurrentCardValueIndex: 0, CheatPlayers: make([]*CheatPlayer, 0)}
+	s.MaxUsers = 4
+	var c = &Cheat{GameStarted: false, Deck: GetShuffledCheatDeck(), cheatSession: s, isWaitingForCheatDeclarations: false, userTurn: uuid.Nil, turnCounter: 0, CurrentCardValueIndex: 0, CheatPlayers: make([]*CheatPlayer, 0), gameOver: false}
 	go c.Run()
 	return c
 }
 
+// Main game loop
 func (w *Cheat) Run() {
 
 	for {
@@ -56,10 +58,10 @@ func (w *Cheat) Run() {
 		if !w.GameStarted {
 			w.HandleGameStart()
 			continue
-		} else {
-			if w.userTurn == uuid.Nil {
-				w.GetNextUserTurn()
-			}
+		}
+
+		if w.GameStarted && w.userTurn == uuid.Nil && !w.gameOver {
+			w.GetNextUserTurn()
 		}
 
 		switch msg.MessageType {
@@ -75,7 +77,7 @@ func (w *Cheat) Run() {
 
 func (w *Cheat) DealCards() {
 	for _, p := range w.CheatPlayers {
-		cards := w.Deck.DrawNCards(5)
+		cards := w.Deck.DrawNCards(13)
 		p.Hand = append(p.Hand, cards...)
 		p.User.SendMessage(CreateCardsDealtMessage(p.User.UserId, cards))
 	}
@@ -110,7 +112,7 @@ func (c *Cheat) handleCardsPlayedMessage(typedByteMessage *messages.TypedByteMes
 	}).ToSlice(&c.CheatPlayers[c.turnCounter].Hand)
 
 	// Update the discard pile
-	linq.From(c.PlayedCards).Concat(linq.From(c.DiscardPile)).ToSlice(&c.DiscardPile)
+	linq.From(c.DiscardPile).Concat(linq.From(c.PlayedCards)).ToSlice(&c.DiscardPile)
 
 	// Create the "hidden cards" to show the other players
 	cheatCards := make([]cards.Card, len(c.PlayedCards))
@@ -121,7 +123,10 @@ func (c *Cheat) handleCardsPlayedMessage(typedByteMessage *messages.TypedByteMes
 	// Broadcast the card played message to all users
 	c.cheatSession.BroadcastMessage(CreateCardsPlayedMessage(typedByteMessage.SentBy.String(), cheatCards, cardsPlayedMessage.TargetId))
 
+	// Signal that players can declare a cheat
 	c.isWaitingForCheatDeclarations = true
+
+	// Set a timer to end the cheat declaration period if no one declares a cheat
 	go c.SetMaxWaitTimeForCheatDeclarations()
 
 	return nil
@@ -134,6 +139,8 @@ func (c *Cheat) handleDeclaredCheatMessage(typedByteMessage *messages.TypedByteM
 	}
 	c.isWaitingForCheatDeclarations = false
 	c.userTurn = uuid.Nil
+
+	// Broadcast the cheat declaration message
 	c.cheatSession.BroadcastMessage(CreateDeclaredCheatMessage(typedByteMessage.SentBy))
 
 	// Check if the played cards were a cheat
@@ -141,8 +148,8 @@ func (c *Cheat) handleDeclaredCheatMessage(typedByteMessage *messages.TypedByteM
 		return card.(cards.Card).Value != cards.CardValues[c.CurrentCardValueIndex]
 	})
 
-	// Give the discard pile to the appropriate player
 	if caughtCheat {
+		// Give the discard pile to the cheater
 		c.CheatPlayers[c.turnCounter].Hand = append(c.CheatPlayers[c.turnCounter].Hand, c.DiscardPile...)
 
 		// Send a message to the cheater to pickup the discard pile
@@ -152,18 +159,18 @@ func (c *Cheat) handleDeclaredCheatMessage(typedByteMessage *messages.TypedByteM
 		c.cheatSession.BroadcastMessage(CreateCheatResultMessage(typedByteMessage.SentBy.String(), c.CheatPlayers[c.turnCounter].User.UserId.String(), c.PlayedCards))
 
 	} else {
-		for _, cheatPlayer := range c.CheatPlayers {
-			if cheatPlayer.User.UserId == typedByteMessage.SentBy {
-				cheatPlayer.Hand = append(cheatPlayer.Hand, c.DiscardPile...)
+		accuser := linq.From(c.CheatPlayers).FirstWith(func(cheatPlayer interface{}) bool {
+			return cheatPlayer.(*CheatPlayer).User.UserId == typedByteMessage.SentBy
+		}).(*CheatPlayer)
 
-				// Send a message to the accuser to pickup the discard pile
-				cheatPlayer.User.SendMessage(CreateCardsDealtMessage(cheatPlayer.User.UserId, c.DiscardPile))
+		// Give the discard pile to the accuser
+		accuser.Hand = append(accuser.Hand, c.DiscardPile...)
 
-				// Broadcast the cheat result message
-				c.cheatSession.BroadcastMessage(CreateCheatResultMessage(c.CheatPlayers[c.turnCounter].User.UserId.String(), typedByteMessage.SentBy.String(), []cards.Card{}))
-				break
-			}
-		}
+		// Send a message to the accuser to pickup the discard pile
+		accuser.User.SendMessage(CreateCardsDealtMessage(accuser.User.UserId, c.DiscardPile))
+
+		// Broadcast the cheat result message
+		c.cheatSession.BroadcastMessage(CreateCheatResultMessage(c.CheatPlayers[c.turnCounter].User.UserId.String(), typedByteMessage.SentBy.String(), []cards.Card{}))
 	}
 
 	// Empty the discard pile, should always be empty after a cheat declaration

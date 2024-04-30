@@ -66,3 +66,7 @@ func (d *Deck) GetCardCount() int {
 func (d *Deck) GetCards() []Card {
 	return d.Cards
 }
+
+func (d *Deck) GetNumberOfCardsRemaining() int {
+	return len(d.Cards)
+}

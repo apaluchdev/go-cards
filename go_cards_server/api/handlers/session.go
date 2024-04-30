@@ -5,9 +5,9 @@ import (
 
 	"example.com/go_cards_server/api/cookieutil"
 	"example.com/go_cards_server/gametypes"
-	"example.com/go_cards_server/user"
 	"example.com/go_cards_server/session"
 	"example.com/go_cards_server/sessionmgr"
+	"example.com/go_cards_server/user"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -29,13 +29,6 @@ func ConnectSession(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 	}
 
-	// Upgrade HTTP connection to WebSocket
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		http.Error(c.Writer, "Failed to upgrade to websocket connection", http.StatusInternalServerError)
-		return
-	}
-
 	// Check if the session id is provided in the query parameters
 	sessionId, err := uuid.Parse(c.Query("id"))
 	if err != nil {
@@ -55,6 +48,13 @@ func ConnectSession(c *gin.Context) {
 
 	if (len(s.Users) >= s.MaxUsers) && s.MaxUsers != 0 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Session is full"})
+		return
+	}
+
+	// Upgrade HTTP connection to WebSocket
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		http.Error(c.Writer, "Failed to upgrade to websocket connection", http.StatusInternalServerError)
 		return
 	}
 
