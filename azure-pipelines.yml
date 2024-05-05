@@ -9,6 +9,11 @@ steps:
 - task: GoTool@0
   inputs:
     version: '1.21.7'
+    
+- task: CopyFiles@2
+  inputs:
+    Contents: '**'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
 - script: |
     go mod download
