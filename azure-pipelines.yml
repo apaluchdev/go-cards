@@ -19,8 +19,7 @@ steps:
     go mod download
   displayName: 'Download dependencies'
 
-# - script: |
-#     go build -o ./bin/your-binary-name ./path/to/your/main/package
-#   displayName: 'Build Go Project'
-  
-  
+- task: Go@0
+  inputs:
+    command: 'build'
+    workingDirectory: '''$(Build.ArtifactStagingDirectory)/go_cards_server/cmd'''
