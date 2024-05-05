@@ -8,17 +8,14 @@ pool: Adrian-PC
 steps:
 - task: GoTool@0
   inputs:
-    version: '1.x'
-    architecture: 'amd64'
-    goPath: '$(GOPATH)'
-    goRoot: '$(GOROOT)'
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    clean: false
+    version: '1.21.7'
 
 - script: |
     go mod download
   displayName: 'Download dependencies'
 
-- script: |
-    go build -o ./bin/your-binary-name ./path/to/your/main/package
-  displayName: 'Build Go Project'
+# - script: |
+#     go build -o ./bin/your-binary-name ./path/to/your/main/package
+#   displayName: 'Build Go Project'
+  
+  
