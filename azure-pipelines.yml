@@ -17,11 +17,11 @@ steps:
   inputs:
     command: 'get'
     arguments: '-d'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/go_cards_server'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/go_cards_server/cmd'
 - task: Go@0
   inputs:
     command: 'build'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/go_cards_server'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/go_cards_server/cmd'
 - task: CopyFiles@2
   inputs:
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
