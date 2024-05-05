@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Test for commit - remove me later
 func Login(c *gin.Context) {
 	userId := uuid.New().String()
 	// Get the value of the "username" query parameter
