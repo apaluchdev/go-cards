@@ -5,7 +5,10 @@ trigger:
 
 pool: Adrian-PC
 
-steps: 
+steps:
+- script: |
+    echo "##[debug] System Default Working Directory: $(System.DefaultWorkingDirectory)"
+    echo "##[debug] Build Artifact Staging Directory: $(Build.ArtifactStagingDirectory)"
 - task: GoTool@0
   inputs:
     version: '1.13.5'
