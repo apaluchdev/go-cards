@@ -5,21 +5,26 @@ trigger:
 
 pool: Adrian-PC
 
-steps:
+steps: 
 - task: GoTool@0
   inputs:
-    version: '1.21.7'
-    
-- task: CopyFiles@2
+    version: '1.13.5'
+- task: Go@0
   inputs:
-    Contents: '**'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)'
-
-- script: |
-    go mod download
-  displayName: 'Download dependencies'
-
+    command: 'get'
+    arguments: '-d'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
 - task: Go@0
   inputs:
     command: 'build'
-    workingDirectory: '''$(Build.ArtifactStagingDirectory)/go_cards_server/cmd'''
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+- task: CopyFiles@2
+  inputs:
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+- task: PublishBuildArtifacts@1
+  inputs:
+     artifactName: drop
+- task: Go@0
+  inputs:
+    command: 'build'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
