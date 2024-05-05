@@ -170,7 +170,7 @@ func (c *Cheat) handleDeclaredCheatMessage(typedByteMessage *messages.TypedByteM
 		accuser.User.SendMessage(CreateCardsDealtMessage(accuser.User.UserId, c.DiscardPile))
 
 		// Broadcast the cheat result message
-		c.cheatSession.BroadcastMessage(CreateCheatResultMessage(c.CheatPlayers[c.turnCounter].User.UserId.String(), typedByteMessage.SentBy.String(), []cards.Card{}))
+		c.cheatSession.BroadcastMessage(CreateCheatResultMessage(c.CheatPlayers[c.turnCounter].User.UserId.String(), typedByteMessage.SentBy.String(), c.PlayedCards))
 	}
 
 	// Empty the discard pile, should always be empty after a cheat declaration
@@ -213,7 +213,7 @@ func (c *Cheat) GetNextUserTurn() {
 }
 
 func (c *Cheat) SetMaxWaitTimeForCheatDeclarations() {
-	timer := time.NewTimer(9 * time.Second)
+	timer := time.NewTimer(6 * time.Second)
 	<-timer.C
 
 	if c.isWaitingForCheatDeclarations {

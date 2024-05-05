@@ -134,7 +134,7 @@ func CreateCheatResultMessage(winnerId string, loserId string, cards []cards.Car
 	return CheatResultMessage{
 		WinnerId: winnerId,
 		LoserId:  loserId,
-		Cards:   cards,
+		Cards:    cards,
 		MessageInfo: messages.MessageInfo{
 			MessageType:      messages.CheatResultMessageType,
 			MessageTimestamp: time.Now(),
