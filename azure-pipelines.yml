@@ -6,19 +6,25 @@ trigger:
 pool: Adrian-PC
 
 steps:
+- script: |
+    echo "##[debug] System Default Working Directory: $(System.DefaultWorkingDirectory)"
+    echo "##[debug] Build Artifact Staging Directory: $(Build.ArtifactStagingDirectory)"
+    dir
 - task: GoTool@0
   inputs:
-    version: '1.x'
-    architecture: 'amd64'
-    goPath: '$(GOPATH)'
-    goRoot: '$(GOROOT)'
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    clean: false
-
-- script: |
-    go mod download
-  displayName: 'Download dependencies'
-
-- script: |
-    go build -o ./bin/your-binary-name ./path/to/your/main/package
-  displayName: 'Build Go Project'
+    version: '1.21.7'
+- task: Go@0
+  inputs:
+    command: 'get'
+    arguments: '-d'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/go_cards_server/cmd'
+- task: Go@0
+  inputs:
+    command: 'build'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/go_cards_server/cmd'
+- task: CopyFiles@2
+  inputs:
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+- task: PublishBuildArtifacts@1
+  inputs:
+     artifactName: drop
