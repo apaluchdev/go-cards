@@ -30,5 +30,6 @@ steps:
      artifactName: drop
 - task: Docker@2
   inputs:
-    command: 'build'
+    containerRegistry: 'GoCheatRegistry'
+    command: 'buildAndPush'
     Dockerfile: '**/Dockerfile'
