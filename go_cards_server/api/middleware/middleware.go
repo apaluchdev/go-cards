@@ -13,7 +13,7 @@ func GuestAuthMiddleware() gin.HandlerFunc {
 		if err != nil {
 			// userId cookie not set, return an error
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "userId cookie not set. Please login.",
+				"error": "userId cookie not set. Please login.", //test
 			})
 			c.Abort() // Abort further processing
 			return
