@@ -34,3 +34,4 @@ steps:
     repository: 'GoCheatServer'
     command: 'buildAndPush'
     Dockerfile: '**/Dockerfile'
+    tags: 'latest'
