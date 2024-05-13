@@ -12,8 +12,8 @@ func InitializeRouter() {
 	reactAppDomain := "http://localhost:3000" //os.Getenv("REACT_APP_DOMAIN")
 	// Allow requests from front end domain
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", reactAppDomain)
 		c.Writer.Header().Set("Access-Control-Allow-Origin", os.Getenv("GO_CHEAT_CLIENT_DOMAIN"))
+		c.Writer.Header().Set("Access-Control-Allow-Origin", reactAppDomain)
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Cookie, Set-Cookie, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
