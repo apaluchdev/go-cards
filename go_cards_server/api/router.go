@@ -1,6 +1,7 @@
 package router
 
 import (
+	"log"
 	"os"
 
 	router "example.com/go_cards_server/api/routes"
@@ -8,11 +9,17 @@ import (
 )
 
 func InitializeRouter() {
+	log.Println("v1.0.0")
+
 	r := gin.Default()
-	reactAppDomain := "http://localhost:3000" //os.Getenv("REACT_APP_DOMAIN")
+	reactAppDomain := os.Getenv("REACT_APP_DOMAIN")
+
+	if reactAppDomain == "" {
+		reactAppDomain = "http://localhost:3000"
+	}
+
 	// Allow requests from front end domain
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", os.Getenv("GO_CHEAT_CLIENT_DOMAIN"))
 		c.Writer.Header().Set("Access-Control-Allow-Origin", reactAppDomain)
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
