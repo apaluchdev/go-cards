@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +10,8 @@ import (
 
 func GuestAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		fmt.Println("Middleware hit! v1.0.0.0")
+
 		userId, err := c.Cookie("userId")
 		if err != nil {
 			// userId cookie not set, return an error
