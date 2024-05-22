@@ -13,15 +13,14 @@ func InitializeRouter() {
 	log.Println("v1.0.0")
 
 	r := gin.Default()
-	reactAppDomain := os.Getenv("REACT_APP_DOMAIN")
 
-	if reactAppDomain == "" {
-		reactAppDomain = "http://localhost:3000"
+	if os.Getenv("REACT_APP_DOMAIN") == "" {
+		os.Setenv("REACT_APP_DOMAIN", "http://localhost:3000")
 	}
 
 	// Allow requests from front end domain
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", reactAppDomain)
+		c.Writer.Header().Set("Access-Control-Allow-Origin", os.Getenv("REACT_APP_DOMAIN"))
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Cookie, Set-Cookie, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
@@ -44,7 +43,7 @@ func InitializeRouter() {
 
 func GetVersion(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"apiVersion":   "1.0.0.1",
+		"apiVersion":   "1.0.0.2",
 		"clientDomain": os.Getenv("REACT_APP_DOMAIN"),
 	})
 }
