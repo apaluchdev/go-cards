@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -14,8 +15,8 @@ func Login(c *gin.Context) {
 	// Get the value of the "username" query parameter
 	username := c.Query("username")
 
-	setCookie(c, "userId", userId, 21600 /* age */, "/" /* valid for all paths */, os.Getenv("REACT_APP_DOMAIN"), false /* secure */, false /* HTTP only */)
-	setCookie(c, "username", username, 21600 /* age */, "/" /* valid for all paths */, os.Getenv("REACT_APP_DOMAIN"), false /* secure */, false /* HTTP only */)
+	setCookie(c, "userId", userId, 21600 /* age */, "/" /* valid for all paths */, os.Getenv("REACT_APP_DOMAIN"), !strings.Contains(os.Getenv("REACT_APP_DOMAIN"), "localhost"), false /* HTTP only */)
+	setCookie(c, "username", username, 21600 /* age */, "/" /* valid for all paths */, os.Getenv("REACT_APP_DOMAIN"), !strings.Contains(os.Getenv("REACT_APP_DOMAIN"), "localhost"), false /* HTTP only */)
 
 	fmt.Println("Set cookie!")
 	c.JSON(http.StatusOK, gin.H{
