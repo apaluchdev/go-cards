@@ -2,6 +2,7 @@ package router
 
 import (
 	"log"
+	"net/http"
 	"os"
 
 	router "example.com/go_cards_server/api/routes"
@@ -36,6 +37,13 @@ func InitializeRouter() {
 
 	router.SetupSessionRoutes(r)
 	router.SetupAuthRoutes(r)
+	r.GET("/", GetVersion)
 
 	r.Run()
+}
+
+func GetVersion(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"apiVersion": "1.0.0.0",
+	})
 }
