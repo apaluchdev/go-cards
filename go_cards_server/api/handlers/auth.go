@@ -14,12 +14,25 @@ func Login(c *gin.Context) {
 	// Get the value of the "username" query parameter
 	username := c.Query("username")
 
-	c.SetCookie("userId", userId, 21600 /* age */, "/" /* valid for all paths */, os.Getenv("REACT_APP_DOMAIN"), false /* secure */, false /* HTTP only */)
-	c.SetCookie("username", username, 21600 /* age */, "/" /* valid for all paths */, os.Getenv("REACT_APP_DOMAIN"), false /* secure */, false /* HTTP only */)
+	setCookie(c, "userId", userId, 21600 /* age */, "/" /* valid for all paths */, os.Getenv("REACT_APP_DOMAIN"), false /* secure */, false /* HTTP only */)
+	setCookie(c, "username", username, 21600 /* age */, "/" /* valid for all paths */, os.Getenv("REACT_APP_DOMAIN"), false /* secure */, false /* HTTP only */)
 
 	fmt.Println("Set cookie!")
 	c.JSON(http.StatusOK, gin.H{
 		"userId":   userId,
 		"username": username,
+	})
+}
+
+func setCookie(c *gin.Context, name, value string, maxAge int, path, domain string, secure, httpOnly bool) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     path,
+		Domain:   domain,
+		MaxAge:   maxAge,
+		Secure:   secure,
+		HttpOnly: httpOnly,
+		SameSite: http.SameSiteNoneMode, // explicitly set SameSite=None
 	})
 }
