@@ -34,6 +34,6 @@ func setCookie(c *gin.Context, name, value string, maxAge int, path, domain stri
 		MaxAge:   maxAge,
 		Secure:   secure,
 		HttpOnly: httpOnly,
-		SameSite: http.SameSiteNoneMode, // explicitly set SameSite=None
+		SameSite: http.SameSiteStrictMode,
 	})
 }
