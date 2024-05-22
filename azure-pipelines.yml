@@ -43,4 +43,4 @@ steps:
     resourceGroupName: 'GoCheat'
     slotName: 'production'
     containers: 'gocheatregistry.azurecr.io/gocheatserver:test'
-    appSettings: '-REACT_APP_DOMAIN gocheat.azurewebsites.net'
+    appSettings: '-REACT_APP_DOMAIN https://gocheat.azurewebsites.net'
