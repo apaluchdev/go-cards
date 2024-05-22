@@ -39,4 +39,8 @@ steps:
   inputs:
     azureSubscription: 'Azure subscription 1(36ed3de6-9239-4dbf-92c7-9ec5f09a2323)'
     appName: 'GoCheatServer'
+    deployToSlotOrASE: true
+    resourceGroupName: 'GoCheat'
+    slotName: 'production'
     containers: 'gocheatregistry.azurecr.io/gocheatserver:test'
+    appSettings: '-REACT_APP_DOMAIN https://gocheat.azurewebsites.net'
