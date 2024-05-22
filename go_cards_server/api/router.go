@@ -44,6 +44,7 @@ func InitializeRouter() {
 
 func GetVersion(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"apiVersion": "1.0.0.0",
+		"apiVersion":   "1.0.0.0",
+		"clientDomain": os.Getenv("REACT_APP_DOMAIN"),
 	})
 }
