@@ -1,27 +1,25 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
-	"os"
-	"strings"
 
+	"example.com/go_cards_server/jwthelper"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 func Login(c *gin.Context) {
 	userId := uuid.New().String()
-	// Get the value of the "username" query parameter
 	username := c.Query("username")
 
-	setCookie(c, "userId", userId, 21600 /* age */, "/" /* valid for all paths */, os.Getenv("REACT_APP_DOMAIN"), !strings.Contains(os.Getenv("REACT_APP_DOMAIN"), "localhost"), false /* HTTP only */)
-	setCookie(c, "username", username, 21600 /* age */, "/" /* valid for all paths */, os.Getenv("REACT_APP_DOMAIN"), !strings.Contains(os.Getenv("REACT_APP_DOMAIN"), "localhost"), false /* HTTP only */)
+	tokenString, err := jwthelper.GenerateJWT(userId, username)
+	if err != nil {
+		c.Writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	fmt.Println("Set cookie!")
 	c.JSON(http.StatusOK, gin.H{
-		"userId":   userId,
-		"username": username,
+		"token": tokenString,
 	})
 }
 

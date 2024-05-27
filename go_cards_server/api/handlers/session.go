@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"example.com/go_cards_server/api/cookieutil"
 	"example.com/go_cards_server/gametypes"
+	"example.com/go_cards_server/jwthelper"
 	"example.com/go_cards_server/session"
 	"example.com/go_cards_server/sessionmgr"
 	"example.com/go_cards_server/user"
@@ -12,6 +12,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
+
+type AuthRequest struct {
+	AuthToken string `json:"authToken" binding:"required"`
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -21,12 +25,43 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+func GetTicket(c *gin.Context) {
+	// Get the authToken from the POST request body
+	var authRequest AuthRequest
+
+	// Bind the JSON payload to the struct
+	if err := c.ShouldBindJSON(&authRequest); err != nil {
+		// If there is an error in binding, return a bad request response
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	claims, err := jwthelper.VerifyJWT(authRequest.AuthToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Error verifying token"})
+	}
+
+	if claims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+	}
+
+	ticket := session.GetTicket()
+	session.ClaimsForTickets[ticket] = claims
+	c.JSON(http.StatusOK, gin.H{"ticket": ticket})
+}
+
 func ConnectSession(c *gin.Context) {
 	var s *session.Session = nil
+	ticket := c.Query("ticket")
+	claims := session.ClaimsForTickets[ticket]
 
-	userIdUuid, username, err := cookieutil.GetUserIdAndUsernameFromContext(c)
+	userIdUuid, err := uuid.Parse(claims.UserID)
+	username := claims.Username
+
+	session.DeleteClaimsForTicket(ticket)
+
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Error occurred with parsing user id"})
 	}
 
 	// Check if the session id is provided in the query parameters
