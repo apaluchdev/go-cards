@@ -30,17 +30,20 @@ steps:
      artifactName: drop
 - task: Docker@2
   inputs:
-    containerRegistry: 'GoCheatContainerRegistry'
-    repository: 'GoCheatServer'
+    containerRegistry: 'GoCheatACRServiceConnectionServicePrincipal'
+    repository: 'gocheatserver'
     command: 'buildAndPush'
     Dockerfile: '**/Dockerfile'
     tags: '$(Build.BuildId)'
-- task: AzureWebAppContainer@1
+- task: AzureContainerApps@1
   inputs:
-    azureSubscription: 'Azure subscription 1(36ed3de6-9239-4dbf-92c7-9ec5f09a2323)'
-    appName: 'GoCheatServer'
-    deployToSlotOrASE: true
-    resourceGroupName: 'GoCheat'
-    slotName: 'production'
-    containers: 'gocheatregistry.azurecr.io/gocheatserver:$(Build.BuildId)'
-    appSettings: '-REACT_APP_DOMAIN https://gocheat.azurewebsites.net'
+    azureSubscription: 'GoCheatServiceConnection'
+    containerAppName: 'gocheatservercontainerapp'
+    resourceGroup: 'GoCheat'
+    containerAppEnvironment: 'gocheat-env'
+    imageToDeploy: 'gocheatregistry.azurecr.io/gocheatserver:$(Build.BuildId)'
+    acrName: 'gocheatregistry'
+    acrUsername: 'GoCheatRegistry'
+    acrPassword: $(acrPassword)
+    targetPort: '8080'
+    environmentVariables: REACT_APP_DOMAIN=https://gocheat.win
