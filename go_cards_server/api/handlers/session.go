@@ -52,13 +52,25 @@ func GetTicket(c *gin.Context) {
 
 func ConnectSession(c *gin.Context) {
 	var s *session.Session = nil
-	ticket := c.Query("ticket")
-	claims := session.ClaimsForTickets[ticket]
+
+	tokenString, err := c.Cookie("Authorization")
+	if tokenString == "" || err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token provided"})
+		c.Abort()
+		return
+	}
+
+	claims := &jwthelper.Claims{}
+	claims, err = jwthelper.VerifyJWT(tokenString)
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
 
 	userIdUuid, err := uuid.Parse(claims.UserID)
 	username := claims.Username
-
-	session.DeleteClaimsForTicket(ticket)
 
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Error occurred with parsing user id"})
