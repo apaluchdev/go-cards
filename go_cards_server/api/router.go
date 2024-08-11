@@ -10,8 +10,6 @@ import (
 )
 
 func InitializeRouter() {
-	log.Println("v1.0.0")
-
 	r := gin.Default()
 
 	if os.Getenv("REACT_APP_DOMAIN") == "" {
@@ -38,7 +36,17 @@ func InitializeRouter() {
 	router.SetupAuthRoutes(r)
 	r.GET("/", GetVersion)
 
-	r.Run()
+	if os.Getenv("ENV") == "prod" {
+		err := r.RunTLS(":8080", "/certs/fullchain.pem", "/certs/privkey.pem")
+		if err != nil {
+			log.Fatal("Failed to start server: ", err)
+		}
+	} else {
+		err := r.Run()
+		if err != nil {
+			log.Fatal("Failed to start server: ", err)
+		}
+	}
 }
 
 func GetVersion(c *gin.Context) {
