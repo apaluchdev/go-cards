@@ -13,6 +13,5 @@ func SetupSessionRoutes(r *gin.Engine) {
 
 		sessionGroup.GET("/", handlers.GetSession)
 		sessionGroup.GET("/connect", handlers.ConnectSession)
-		sessionGroup.POST("/ticket", handlers.GetTicket)
 	}
 }
