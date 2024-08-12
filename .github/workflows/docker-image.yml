@@ -14,5 +14,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: login to docker hub
+      id: docker-hub
+      env:
+        username: ${{secrets.DOCKERHUB_USERNAME}}
+        password: ${{secrets.DOCKERHUB_PASSWORD}}
+      run: |
+        docker login -u $username -p $password 
     - name: Build the Docker image
-      run: cd go_cards_server && docker build . --file Dockerfile --tag apaluch/go-cheat:latest && docker push apaluch/go-cheat:latest 
+      run:
+        cd go_cards_server && docker build . --file Dockerfile --tag apaluch/go-cheat:latest && docker push apaluch/go-cheat:latest 
