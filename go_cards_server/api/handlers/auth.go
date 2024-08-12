@@ -22,16 +22,3 @@ func Login(c *gin.Context) {
 		"token": tokenString,
 	})
 }
-
-func setCookie(c *gin.Context, name, value string, maxAge int, path, domain string, secure, httpOnly bool) {
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     name,
-		Value:    value,
-		Path:     path,
-		Domain:   domain,
-		MaxAge:   maxAge,
-		Secure:   secure,
-		HttpOnly: httpOnly,
-		SameSite: http.SameSiteStrictMode,
-	})
-}
