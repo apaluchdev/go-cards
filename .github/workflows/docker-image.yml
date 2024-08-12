@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file go_cards_server/Dockerfile --tag apaluch/go-cheat:latest && docker push apaluch/go-cheat:latest 
+      run: cd go_cards_server && docker build . --file Dockerfile --tag apaluch/go-cheat:latest && docker push apaluch/go-cheat:latest 
