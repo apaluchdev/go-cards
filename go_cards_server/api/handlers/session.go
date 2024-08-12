@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"example.com/go_cards_server/gametypes"
@@ -30,6 +31,7 @@ func ConnectSession(c *gin.Context) {
 
 	tokenString, err := c.Cookie("Authorization")
 	if tokenString == "" || err != nil {
+		log.Println("No token provided")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token provided"})
 		c.Abort()
 		return
@@ -39,6 +41,7 @@ func ConnectSession(c *gin.Context) {
 	claims, err = jwthelper.VerifyJWT(tokenString)
 
 	if err != nil {
+		log.Println("Invalid token")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 		c.Abort()
 		return
@@ -48,6 +51,7 @@ func ConnectSession(c *gin.Context) {
 	username := claims.Username
 
 	if err != nil {
+		log.Println("Error occurred with parsing user id")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Error occurred with parsing user id"})
 	}
 
